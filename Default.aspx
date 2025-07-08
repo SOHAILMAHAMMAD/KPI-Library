@@ -1,8 +1,9 @@
-﻿<%@ Page Title="Home Page" Language="VB" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="Default.aspx.vb" Inherits="KPILibrary._Default" %>
+﻿
+<%@ Page Title="KPI Management" Language="VB" MasterPageFile="~/Site.Master" AutoEventWireup="false" CodeBehind="Default.aspx.vb" Inherits="KPILibrary._Default" %>
+<%@ Import Namespace="System.Web.Services" %>
 
-<asp:Content ID="BodyContent" ContentPlaceHolderID="MainContent" runat="server">
-
-   <style>
+<asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
+    <style>
         .modal {
             display: none;
             position: fixed;
@@ -19,7 +20,18 @@
             z-index: 1000;
         }
         .close-btn { float: right; font-size: 20px; font-weight: bold; cursor: pointer; }
-        .error-span { color: red; font-size: 12px; margin-left: 10px; }
+        .error-span { 
+            color: red; 
+            font-size: 12px; 
+            margin-left: 10px; 
+            display:none;
+            visibility:hidden;
+            font-weight: bold;
+        }
+        .error-span.show {
+            display: inline;
+            visibility: visible;
+        }
         .toggle-switch { position: relative; display: inline-block; width: 40px; height: 20px; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
         .slider {
@@ -44,84 +56,255 @@
             width: 520px; max-width: none !important; box-sizing: border-box;
         }
     </style>
-
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script>
-        function showPopup() {
-            document.getElementById('kpiModal').style.display = 'block'; 
+<script>
+    let lblKPIError = null;
+    let inputField = null;
+    let isCheckingKPI = false;
+
+    function showPopup() {
+        document.getElementById('kpiModal').style.display = 'block';
+    }
+
+    function hidePopup() {
+        document.getElementById('kpiModal').style.display = 'none';
+        document.getElementById("<%= lblOrderError.ClientID %>").style.display = "none";
+        document.getElementById("<%= lblDuplicateMetricKPIError.ClientID %>").style.display = "none";
+        document.getElementById("<%= lblKPIError.ClientID %>").style.display = "none";
+    }
+
+    function showElement(element) {
+        if (element) {
+            element.classList.add('show');
         }
-        function hidePopup() {
-            document.getElementById('kpiModal').style.display = 'none';
+    }
+
+    function hideElement(element) {
+        if (element) {
+            element.classList.remove('show');
         }
+    }
 
-        function checkKPIID() {
-            var kpiID = document.getElementById('<%= txtKPIID.ClientID %>').value;
-            kpiID = kpiID.replace(/\s{2,}/g, ' ').trim(); // Normalize spaces
-            document.getElementById('<%= txtKPIID.ClientID %>').value = kpiID; // Update textbox
+    function debounce(func, delay) {
+        let timer;
+        return function () {
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+                func.apply(this, arguments);
+            }, delay);
+        };
+    }
 
-            if (kpiID === "") return;
-
-            $.ajax({
-                type: "POST",
-                url: "Default.aspx/CheckKPIExists",
-                data: JSON.stringify({ kpiID: kpiID }),
-                contentType: "application/json; charset=utf-8",
-                dataType: "json",
-                xhrFields: {
-                    withCredentials: true
-                },
-                success: function (response) {
-                    var exists = response.d;
-                    var lbl = document.getElementById("lblKPIError"); // Hardcoded ID for dynamic label
-
-                    // If label doesn't exist and we need to show message, create it
-                    if (exists && !lbl) {
-                        lbl = document.createElement("label");
-                        lbl.id = "lblKPIError";
-                        lbl.textContent = "KPI ID already exists.";
-                        lbl.style.color = "red";
-                        lbl.style.fontSize = "12px";
-                        lbl.style.display = "block";
-
-                        // Insert after the input field
-                        var inputField = document.getElementById('<%= txtKPIID.ClientID %>');
-                         if (inputField) {
-                             inputField.parentNode.insertBefore(lbl, inputField.nextSibling);
-                         } else {
-                             document.body.appendChild(lbl); // fallback
-                         }
-                     }
-
-                     // Show or hide the label based on result
-                     if (exists && lbl) {
-                         lbl.style.display = "block";
-                     } else if (lbl) {
-                         lbl.style.display = "none";
-                     }
-                 },
-                 error: function (xhr, status, error) {
-                     console.log("AJAX error: ", xhr.status, error);
-                 }
-             });
+    function createKPIErrorLabel() {
+        const inputField = document.getElementById('<%=txtKPIID.ClientID%>');
+        if (!inputField) {
+            console.error("Cannot create error label: Input field not found");
+            return null;
         }
 
-                
+        const errorSpan = document.createElement('span');
+        errorSpan.id = 'dynamicKPIError';
+        errorSpan.className = 'error-span';
+        errorSpan.innerText = "KPI ID already exists";
+        inputField.parentNode.appendChild(errorSpan);
+        console.log("Dynamic error label created");
+        return errorSpan;
+    }
 
-    </script>
+    function checkKPIID() {
+        if (isCheckingKPI) {
+            return;
+        }
+
+        if (!inputField) {
+            inputField = document.getElementById('<%=txtKPIID.ClientID%>');
+        }
+        if (!lblKPIError) {
+            lblKPIError = document.getElementById('<%=lblKPIError.ClientID%>');
+            if (!lblKPIError) {
+                lblKPIError = document.getElementById('dynamicKPIError') || createKPIErrorLabel();
+            }
+        }
+
+        if (!inputField || !lblKPIError) {
+            console.error("Input field or error label not found");
+            return;
+        }
+
+        var kpiID = inputField.value.trim().replace(/\s{2,}/g, ' ');
+        inputField.value = kpiID;
+
+        if (kpiID === "") {
+            hideElement(lblKPIError);
+            return;
+        }
+
+        var isEdit = document.getElementById('<%=hfIsEdit.ClientID%>');
+        var originalKPIID = document.getElementById('<%=hfKPIID.ClientID%>');
+        if (isEdit && originalKPIID && isEdit.value === "true" && kpiID === originalKPIID.value) {
+            hideElement(lblKPIError);
+            return;
+        }
+
+        isCheckingKPI = true;
+
+        $.ajax({
+            type: "POST",
+            url: "Default.aspx/CheckKPIExists",
+            data: JSON.stringify({ kpiID: kpiID }),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            timeout: 10000,
+            success: function (response) {
+                console.log("AJAX Response:", response);
+                if (response.d === true) {
+                    lblKPIError.innerText = "KPI ID already exists!";
+                    showElement(lblKPIError);
+                } else {
+                    hideElement(lblKPIError);
+                }
+                isCheckingKPI = false;
+            },
+            error: function (xhr, status, error) {
+                console.error("AJAX error:", xhr.status, xhr.responseText, error);
+                isCheckingKPI = false;
+            }
+        });
+    }
+
+    // ✅ Updated to allow insert even if AJAX check fails (e.g., 401 Unauthorized)
+    function validateBeforeSubmit() {
+        if (!inputField) {
+            inputField = document.getElementById('<%=txtKPIID.ClientID%>');
+        }
+        if (!lblKPIError) {
+            lblKPIError = document.getElementById('<%=lblKPIError.ClientID%>');
+            if (!lblKPIError) {
+                lblKPIError = document.getElementById('dynamicKPIError') || createKPIErrorLabel();
+            }
+        }
+
+        if (!inputField || !lblKPIError) {
+            console.error("Input field or error label not found during submission");
+            return true; // Let it pass instead of blocking
+        }
+
+        var kpiID = inputField.value.trim().replace(/\s{2,}/g, ' ');
+        inputField.value = kpiID;
+
+        var isEdit = document.getElementById('<%=hfIsEdit.ClientID%>');
+        var originalKPIID = document.getElementById('<%=hfKPIID.ClientID%>');
+        if (isEdit && originalKPIID && isEdit.value === "true" && kpiID === originalKPIID.value) {
+            hideElement(lblKPIError);
+            return true;
+        }
+
+        if (lblKPIError.classList.contains('show')) {
+            showElement(lblKPIError);
+            return false;
+        }
+
+        let isValid = true;
+        $.ajax({
+            type: "POST",
+            url: "Default.aspx/CheckKPIExists",
+            data: JSON.stringify({ kpiID: kpiID }),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            async: false,
+            success: function (response) {
+                if (response.d === true) {
+                    lblKPIError.innerText = "KPI ID already exists";
+                    showElement(lblKPIError);
+                    isValid = false;
+                } else {
+                    hideElement(lblKPIError);
+                }
+            },
+            error: function (xhr, status, error) {
+                console.warn("AJAX validation failed. Bypassing check and allowing submission.");
+                hideElement(lblKPIError); // Hide error if present
+                isValid = true; // Allow insert even on error
+            }
+        });
+
+        return isValid;
+    }
+
+    $(document).ready(function () {
+        console.log("Document ready, initializing KPI ID validation");
+
+        inputField = document.getElementById('<%=txtKPIID.ClientID%>');
+        lblKPIError = document.getElementById('<%=lblKPIError.ClientID%>');
+        if (!lblKPIError) {
+            lblKPIError = document.getElementById('dynamicKPIError') || createKPIErrorLabel();
+        }
+
+        console.log("Input field found:", inputField !== null);
+        console.log("Error label found:", lblKPIError !== null);
+
+        if (inputField && lblKPIError) {
+            $(inputField).off('input.kpivalidation blur.kpivalidation');
+            $(inputField).on('input.kpivalidation', debounce(checkKPIID, 500));
+            $(inputField).on('blur.kpivalidation', checkKPIID);
+            console.log("Event listeners attached for KPI ID validation");
+        } else {
+            console.error("Failed to initialize: Input or error label missing");
+        }
+
+        if (lblKPIError) {
+            hideElement(lblKPIError);
+        }
+
+        var submitButton = document.getElementById('<%=btnSubmit.ClientID%>');
+        if (submitButton) {
+            $(submitButton).off('click.kpivalidation').on('click.kpivalidation', function (e) {
+                if (!validateBeforeSubmit()) {
+                    e.preventDefault();
+                    showPopup();
+                    return false;
+                }
+            });
+        }
+    });
+
+    function showKPIError(message) {
+        if (!lblKPIError) {
+            lblKPIError = document.getElementById('<%=lblKPIError.ClientID%>');
+            if (!lblKPIError) {
+                lblKPIError = document.getElementById('dynamicKPIError') || createKPIErrorLabel();
+            }
+        }
+        if (lblKPIError) {
+            lblKPIError.innerText = message || "KPI ID already exists";
+            showElement(lblKPIError);
+        }
+    }
+
+    function hideKPIError() {
+        if (!lblKPIError) {
+            lblKPIError = document.getElementById('<%=lblKPIError.ClientID%>');
+            if (!lblKPIError) {
+                lblKPIError = document.getElementById('dynamicKPIError') || createKPIErrorLabel();
+            }
+        }
+        if (lblKPIError) {
+            hideElement(lblKPIError);
+        }
+    }
+</script>
+
+
 
     <div id="kpiModal" class="modal">
-
-
-        <span class="close-btn" onclick="hidePopup()">&times;</span>
+        <span class="close-btn" onclick="hidePopup()">×</span>
         <h3><asp:Label ID="lblFormTitle" runat="server" Text="Add KPI" /></h3>
 
         <table>
-            <tr><td>KPI ID:</td><td><asp:TextBox ID="txtKPIID" runat="server" onkeyup="checkKPIID()" /><asp:Label ID="lblKPIError" runat="server" CssClass="error-span" Visible="False" Text="KPI ID already exists"  /></td></tr>
-            <tr><td>Order:</td><td><asp:TextBox ID="txtOrder" runat="server" /><asp:Label ID="lblOrderError" runat="server" CssClass="error-span" Visible="False" Text="Please add numbers between 1–999" /></td></tr>
+            <tr><td>KPI ID:</td><td><asp:TextBox ID="txtKPIID" runat="server" /><asp:Label ID="lblKPIError" runat="server" CssClass="error-span" Text="KPI ID already exists" ForeColor="Red" Visible="false" /></td></tr>
+            <tr><td>Order:</td><td><asp:TextBox ID="txtOrder" runat="server" /><asp:Label ID="lblOrderError" runat="server"   Text="Please add numbers between 1–999" ForeColor="Red" Style="color: red;font-size: 12px; margin-top:5px;display:block;"  /></td></tr>
             <tr><td>Metric:</td><td><asp:TextBox ID="txtMetric" runat="server" /></td></tr>
-            <tr><td>Name:</td><td><asp:TextBox ID="txtKPIName" runat="server" /><asp:Label ID="lblDuplicateMetricKPIError" runat="server" CssClass="error-span" Visible="False" /></td></tr>
-            
-
+            <tr><td>Name:</td><td><asp:TextBox ID="txtKPIName" runat="server" /><asp:Label ID="lblDuplicateMetricKPIError" runat="server"   ForeColor="Red" Style="color: red;font-size: 12px; margin-top:5px;display:block;"  /></td></tr>
             <tr><td>Short Desc:</td><td><asp:TextBox ID="txtShortDesc" runat="server" TextMode="MultiLine" Rows="3" /></td></tr>
             <tr><td>Impact:</td><td><asp:TextBox ID="txtImpact" runat="server" TextMode="MultiLine" Rows="3" /></td></tr>
             <tr><td>Numerator:</td><td><asp:TextBox ID="txtNumerator" runat="server" TextMode="MultiLine" Rows="3" /></td></tr>
@@ -174,7 +357,6 @@
         </InsertParameters>
         <UpdateParameters>
             <asp:Parameter Name="OriginalKPIID" Type="String" />
-
             <asp:Parameter Name="KPI_ID" />
             <asp:Parameter Name="KPI_or_Standalone_Metric" />
             <asp:Parameter Name="KPI_Name" />
@@ -203,7 +385,6 @@
                 <HeaderTemplate>
                     <asp:Button ID="btnAddKPI" runat="server" Text="+ Add KPI" CssClass="btn-add" OnClick="btnAddKPI_Click" />
                 </HeaderTemplate>
-
                 <ItemTemplate>
                     <asp:Button ID="btnEdit" runat="server" Text="Edit" CommandName="EditKPI" CommandArgument='<%# Container.DataItemIndex %>' CssClass="btn-edit" />
                 </ItemTemplate>
@@ -229,5 +410,4 @@
             <asp:TemplateField HeaderText="FLAG REQUESTID"><ItemTemplate><%# If(Eval("FLAG_REQUESTID").ToString() = "Y", "YES", "NO") %></ItemTemplate></asp:TemplateField>
         </Columns>
     </asp:GridView>
-
 </asp:Content>
