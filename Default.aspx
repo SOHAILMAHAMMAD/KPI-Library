@@ -1,5 +1,4 @@
-﻿
-<%@ Page Title="KPI Management" Language="VB" MasterPageFile="~/Site.Master" AutoEventWireup="false" CodeBehind="Default.aspx.vb" Inherits="KPILibrary._Default" %>
+﻿<%@ Page Title="KPI Management" Language="VB" MasterPageFile="~/Site.Master" AutoEventWireup="false" CodeBehind="Default.aspx.vb" Inherits="KPILibrary._Default" %>
 <%@ Import Namespace="System.Web.Services" %>
 
 <asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
