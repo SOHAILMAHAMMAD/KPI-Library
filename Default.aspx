@@ -1,4 +1,4 @@
-﻿<%@ Page Title="KPI Management" Language="VB" MasterPageFile="~/Site.Master" AutoEventWireup="false" CodeBehind="Default.aspx.vb" Inherits="KPILibrary._Default" %>
+<%@ Page Title="KPI Management" Language="VB" MasterPageFile="~/Site.Master" AutoEventWireup="false" CodeBehind="Default.aspx.vb" Inherits="KPILibrary._Default" %>
 <%@ Import Namespace="System.Web.Services" %>
 
 <asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
@@ -48,12 +48,25 @@
         .btn-edit { background-color: #2196F3; }
         table { width: 100%; border-collapse: collapse; }
         table td, table th { padding: 8px; border: 1px solid #ccc; }
-        .grid-style { border-collapse: collapse; width: 100%; }
-        .grid-style td, .grid-style th { border: 1px solid #ddd; padding: 8px; }
-        .grid-style th { background-color: #f2f2f2; }
+         .grid-style { border-collapse: collapse; width: 100%; table-layout:auto; }
+        .grid-style td, .grid-style th { border: 1px solid #ddd; padding: 8px; text-align:left; white-space:nowrap; }
+         .grid-style th {
+             background-color: #f2f2f2;
+             position: sticky;
+             top: 0;
+             background-color: #f8f8f8;
+             z-index: 1;
+         }
+       .grid-style th {
+            position: sticky;
+            top: 0;
+            background-color: #f2f2f2;
+            z-index: 1;
+        }
         .modal input[type="text"], .modal textarea {
             width: 520px; max-width: none !important; box-sizing: border-box;
         }
+
     </style>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script>
@@ -377,7 +390,7 @@
             <asp:Parameter Name="FLAG_REQUESTID" />
         </UpdateParameters>
     </asp:SqlDataSource>
-
+    <div class="kpi-table-scroll">
     <asp:GridView ID="GridView1" runat="server" AutoGenerateColumns="False" DataSourceID="SqlDataSource1" CssClass="grid-style" OnRowCommand="GridView1_RowCommand">
         <Columns>
             <asp:TemplateField>
@@ -409,4 +422,5 @@
             <asp:TemplateField HeaderText="FLAG REQUESTID"><ItemTemplate><%# If(Eval("FLAG_REQUESTID").ToString() = "Y", "YES", "NO") %></ItemTemplate></asp:TemplateField>
         </Columns>
     </asp:GridView>
+    </div>                  
 </asp:Content>
