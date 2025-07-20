@@ -66,6 +66,127 @@
         .modal input[type="text"], .modal textarea {
             width: 520px; max-width: none !important; box-sizing: border-box;
         }
+        
+        /* NEW: Floating search container */
+        .search-container {
+            position: fixed;
+            top: 80px; /* Position below page title */
+            right: 20px;
+            background: white;
+            padding: 10px 15px;
+            border-radius: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 100;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        
+        .search-box {
+            padding: 10px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 30px;
+            width: 220px;
+            font-size: 14px;
+            background: #f9f9f9;
+            transition: all 0.3s;
+        }
+        
+        .search-box:focus {
+            border-color: #2196F3;
+            outline: none;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
+            width: 280px; /* Expand on focus */
+        }
+        
+        .search-button, .clear-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 30px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .search-button {
+            background-color: #2196F3;
+        }
+        
+        .search-button:hover {
+            background-color: #0b7dda;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
+        }
+        
+        .clear-button {
+            background-color: #f44336;
+        }
+        
+        .clear-button:hover {
+            background-color: #d32f2f;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(244, 67, 54, 0.3);
+        }
+        
+        /* NEW: Page header styling */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: white;
+            border-bottom: 1px solid #eee;
+            position: sticky;
+            top: 0;
+            z-index: 90;
+        }
+        
+        .page-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        /* NEW: Grid container spacing */
+        .grid-container {
+            padding: 20px;
+            margin-top: 10px;
+        }
+        
+        /* NEW: Responsive adjustments */
+        @media (max-width: 1200px) {
+            .search-container {
+                top: 70px;
+                right: 10px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .search-container {
+                position: relative;
+                top: auto;
+                right: auto;
+                width: 100%;
+                border-radius: 0;
+                box-shadow: none;
+                margin-bottom: 15px;
+            }
+            
+            .search-box {
+                width: 100%;
+            }
+            
+            .search-box:focus {
+                width: 100%;
+            }
+        }
 
     </style>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
@@ -187,10 +308,10 @@
     // ✅ Updated to allow insert even if AJAX check fails (e.g., 401 Unauthorized)
     function validateBeforeSubmit() {
         if (!inputField) {
-            inputField = document.getElementById('<%=txtKPIID.ClientID%>');
+            inputField = document.getElementById('<%=lblKPIError.ClientID%>');
         }
         if (!lblKPIError) {
-            lblKPIError = document.getElementById('<%=lblKPIError.ClientID%>');
+            lblKPIError = document.getElementById('<%=txtKPIID.ClientID%>');
             if (!lblKPIError) {
                 lblKPIError = document.getElementById('dynamicKPIError') || createKPIErrorLabel();
             }
@@ -204,7 +325,7 @@
         var kpiID = inputField.value.trim().replace(/\s{2,}/g, ' ');
         inputField.value = kpiID;
 
-        var isEdit = document.getElementById('<%=hfIsEdit.ClientID%>');
+        var isEdit = document.getElementById('<%=txtKPIID.ClientID%>');
         var originalKPIID = document.getElementById('<%=hfKPIID.ClientID%>');
         if (isEdit && originalKPIID && isEdit.value === "true" && kpiID === originalKPIID.value) {
             hideElement(lblKPIError);
@@ -268,7 +389,7 @@
             hideElement(lblKPIError);
         }
 
-        var submitButton = document.getElementById('<%=btnSubmit.ClientID%>');
+        var submitButton = document.getElementById('<%=hfIsEdit.ClientID%>');
         if (submitButton) {
             $(submitButton).off('click.kpivalidation').on('click.kpivalidation', function (e) {
                 if (!validateBeforeSubmit()) {
@@ -282,7 +403,7 @@
 
     function showKPIError(message) {
         if (!lblKPIError) {
-            lblKPIError = document.getElementById('<%=lblKPIError.ClientID%>');
+            lblKPIError = document.getElementById('<%=hfKPIID.ClientID%>');
             if (!lblKPIError) {
                 lblKPIError = document.getElementById('dynamicKPIError') || createKPIErrorLabel();
             }
@@ -295,7 +416,7 @@
 
     function hideKPIError() {
         if (!lblKPIError) {
-            lblKPIError = document.getElementById('<%=lblKPIError.ClientID%>');
+            lblKPIError = document.getElementById('<%=txtKPIID.ClientID = lblKPIError.ClientID%>');
             if (!lblKPIError) {
                 lblKPIError = document.getElementById('dynamicKPIError') || createKPIErrorLabel();
             }
@@ -304,9 +425,75 @@
             hideElement(lblKPIError);
         }
     }
+    // Enhanced filter function
+    function filterGrid() {
+        var input = document.getElementById('<%= txtSearch.ClientID %>');
+        var filter = input.value.toLowerCase();
+        var grid = document.getElementById('<%= GridView1.ClientID %>');
+        var rows = grid.getElementsByTagName('tr');
+
+        // Start from 1 to skip header row
+        for (var i = 1; i < rows.length; i++) {
+            var cells = rows[i].getElementsByTagName('td');
+            var showRow = false;
+
+            // Skip action column (index 0) and check all other columns
+            for (var j = 1; j < cells.length; j++) {
+                var cellText = cells[j].textContent || cells[j].innerText;
+                if (cellText.toLowerCase().indexOf(filter) > -1) {
+                    showRow = true;
+                    break;
+                }
+            }
+
+            rows[i].style.display = showRow ? "" : "none";
+        }
+    }
+
+    // Optimized clear filter
+    function clearFilter() {
+        var input = document.getElementById('<%= txtSearch.ClientID %>');
+        input.value = "";
+        filterGrid(); // Reuse filter function to show all
+    }
+    
+    // Press Enter to search
+    $(document).ready(function() {
+        $('#<%=txtSearch.ClientID%>').keypress(function(e) {
+            if (e.which == 13) {
+                filterGrid();
+                return false; // Prevent form submission
+            }
+        });
+        
+        // Auto focus search when typing anywhere
+        $(document).keypress(function(e) {
+            // Only focus if not already focused and not in modal
+            if ($('#<%=txtSearch.ClientID%>').is(':focus') || $('#kpiModal').is(':visible')) return;
+            
+            // Focus search box when user starts typing
+            if (e.which >= 48 || e.which == 32) { // Numbers, letters or space
+                $('#<%=txtSearch.ClientID%>').focus();
+            }
+        });
+    });
 </script>
 
-
+    <!-- Floating Search Container -->
+    <div class="search-container">
+        <asp:TextBox ID="TextBox1" runat="server" 
+            CssClass="search-box" 
+            placeholder="Search KPI..."
+            ToolTip="Type to search across all columns" />
+        <asp:Button ID="Button1" runat="server" Text="🔍" 
+            OnClientClick="filterGrid(); return false;" 
+            CssClass="search-button"
+            ToolTip="Search" />
+        <asp:Button ID="Button2" runat="server" Text="✕" 
+            OnClientClick="clearFilter(); return false;" 
+            CssClass="clear-button"
+            ToolTip="Clear search" />
+    </div>
 
     <div id="kpiModal" class="modal">
         <span class="close-btn" onclick="hidePopup()">×</span>
@@ -390,8 +577,24 @@
             <asp:Parameter Name="FLAG_REQUESTID" />
         </UpdateParameters>
     </asp:SqlDataSource>
-    <div class="kpi-table-scroll">
-    <asp:GridView ID="GridView1" runat="server" AutoGenerateColumns="False" DataSourceID="SqlDataSource1" CssClass="grid-style" OnRowCommand="GridView1_RowCommand">
+     <div class="kpi-table-scroll">
+        <!-- New search container -->
+        <div class="search-container">
+            <asp:TextBox ID="txtSearch" runat="server" 
+                CssClass="search-box" 
+                placeholder="Search by KPI ID, Name, or Metric..." />
+            <asp:Button ID="btnSearch" runat="server" Text="Search" 
+                OnClientClick="filterGrid(); return false;" 
+                CssClass="search-button" />
+            <asp:Button ID="btnClear" runat="server" Text="Clear" 
+                OnClientClick="clearFilter(); return false;" 
+                CssClass="clear-button" />
+        </div>
+        
+        <asp:GridView ID="GridView1" runat="server" AutoGenerateColumns="False" 
+            DataSourceID="SqlDataSource1" CssClass="grid-style" 
+            OnRowCommand="GridView1_RowCommand"
+            HeaderStyle-CssClass="grid-header">
         <Columns>
             <asp:TemplateField>
                 <HeaderTemplate>
@@ -422,5 +625,6 @@
             <asp:TemplateField HeaderText="FLAG REQUESTID"><ItemTemplate><%# If(Eval("FLAG_REQUESTID").ToString() = "Y", "YES", "NO") %></ItemTemplate></asp:TemplateField>
         </Columns>
     </asp:GridView>
-    </div>                  
+    </div>  
+    
 </asp:Content>
