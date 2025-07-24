@@ -3,192 +3,276 @@
 
 <asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
     <style>
-        .modal {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            width: 800px;
-            height: 500px;
-            overflow-y: auto;
-            background-color: #fff;
-            transform: translate(-50%, -50%);
-            border-radius: 12px;
-            padding: 20px; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            z-index: 1000;
-        }
-        .close-btn { float: right; font-size: 20px; font-weight: bold; cursor: pointer; }
-        .error-span { 
-            color: red; 
-            font-size: 12px; 
-            margin-left: 10px; 
-            display:none;
-            visibility:hidden;
-            font-weight: bold;
-        }
-        .error-span.show {
-            display: inline;
-            visibility: visible;
-        }
-        .toggle-switch { position: relative; display: inline-block; width: 40px; height: 20px; }
-        .toggle-switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #ccc; transition: .4s; border-radius: 20px;
-        }
-        .toggle-switch input:checked + .slider { background-color: #2196F3; }
-        .slider:before {
-            position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px;
-            background-color: white; transition: .4s; border-radius: 50%;
-        }
-        .toggle-switch input:checked + .slider:before { transform: translateX(20px); }
-        .btn-add, .btn-edit { padding: 6px 12px; border: none; border-radius: 4px; color: white; cursor: pointer; }
-        .btn-add { background-color: #4CAF50; }
-        .btn-edit { background-color: #2196F3; }
-        table { width: 100%; border-collapse: collapse; }
-        table td, table th { padding: 8px; border: 1px solid #ccc; }
-         .grid-style { border-collapse: collapse; width: 100%; table-layout:auto; }
-        .grid-style td, .grid-style th { border: 1px solid #ddd; padding: 8px; text-align:left; white-space:nowrap; }
-         .grid-style th {
-             background-color: #f2f2f2;
-             position: sticky;
-             top: 0;
-             background-color: #f8f8f8;
-             z-index: 1;
-         }
-       .grid-style th {
-            position: sticky;
-            top: 0;
-            background-color: #f2f2f2;
-            z-index: 1;
-        }
-        .modal input[type="text"], .modal textarea {
-            width: 520px; max-width: none !important; box-sizing: border-box;
-        }
-        
-        /* NEW: Floating search container */
-        .search-container {
-            position: fixed;
-            top: 80px; /* Position below page title */
-            right: 20px;
-            background: white;
-            padding: 10px 15px;
-            border-radius: 30px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 100;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            transition: all 0.3s ease;
-        }
-        
-        .search-box {
-            padding: 10px 15px;
-            border: 1px solid #e0e0e0;
-            border-radius: 30px;
-            width: 220px;
-            font-size: 14px;
-            background: #f9f9f9;
-            transition: all 0.3s;
-        }
-        
-        .search-box:focus {
-            border-color: #2196F3;
-            outline: none;
-            background: white;
-            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
-            width: 280px; /* Expand on focus */
-        }
-        
-        .search-button, .clear-button {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 30px;
-            color: white;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .search-button {
-            background-color: #2196F3;
-        }
-        
-        .search-button:hover {
-            background-color: #0b7dda;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
-        }
-        
-        .clear-button {
-            background-color: #f44336;
-        }
-        
-        .clear-button:hover {
-            background-color: #d32f2f;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(244, 67, 54, 0.3);
-        }
-        
-        /* NEW: Page header styling */
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            background: white;
-            border-bottom: 1px solid #eee;
-            position: sticky;
-            top: 0;
-            z-index: 90;
-        }
-        
-        .page-title {
-            font-size: 24px;
-            font-weight: bold;
-            color: #333;
-        }
-        
-        /* NEW: Grid container spacing */
-        .grid-container {
-            padding: 20px;
-            margin-top: 10px;
-        }
-        
-        /* NEW: Responsive adjustments */
-        @media (max-width: 1200px) {
-            .search-container {
-                top: 70px;
-                right: 10px;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .search-container {
-                position: relative;
-                top: auto;
-                right: auto;
-                width: 100%;
-                border-radius: 0;
-                box-shadow: none;
-                margin-bottom: 15px;
-            }
-            
-            .search-box {
-                width: 100%;
-            }
-            
-            .search-box:focus {
-                width: 100%;
-            }
-        }
+      .modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 800px;
+    height: 500px;
+    overflow-y: auto;
+    background-color: #fff;
+    transform: translate(-50%, -50%);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    z-index: 1000;
+    box-sizing: border-box;
+}
 
-    </style>
+.close-btn {
+    float: right;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.error-span {
+    color: red;
+    font-size: 12px;
+    margin-left: 10px;
+    display: none;
+    font-weight: bold;
+}
+
+.error-span.show {
+    display: inline;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 20px;
+}
+
+.toggle-switch input:checked + .slider {
+    background-color: #2196F3;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+.toggle-switch input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+.btn-add, .btn-edit {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+}
+
+.btn-add {
+    background-color: #4CAF50;
+}
+
+.btn-edit {
+    background-color: #2196F3;
+}
+
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table td, table th {
+    padding: 8px;
+    border: 1px solid #ccc;
+}
+
+.grid-style {
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: auto;
+}
+
+.grid-style td,
+.grid-style th {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+    white-space: nowrap;
+}
+
+
+.grid-style th {
+    position: sticky;
+    top: 50px; 
+    background-color: #f2f2f2;
+    z-index: 998;
+}
+
+/* Table scroll area */
+.grid-scroll-container {
+    max-height: calc(100vh - 110px); 
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    position: relative;
+}
+
+.modal input[type="text"],
+.modal textarea {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+
+.search-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: white;
+    padding: 10px 20px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    z-index: 1000;
+    border-bottom: 1px solid #ddd;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    height: 60px;
+    box-sizing: border-box;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    background: white;
+    border-bottom: 1px solid #eee;
+    position: fixed;
+    top: 60px; 
+    left: 0;
+    right: 0;
+    z-index: 999;
+    height: 50px;
+    box-sizing: border-box;
+}
+
+.page-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+}
+
+.grid-container {
+    padding: 20px;
+    margin-top: 110px; 
+}
+
+.search-box {
+    padding: 10px 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 30px;
+    width: 220px;
+    font-size: 14px;
+    background: #f9f9f9;
+    transition: all 0.3s;
+    box-sizing: border-box;
+}
+
+.search-box:focus {
+    width: 250px;
+    transition: width 0.3s ease-in-out;
+}
+
+.search-button,
+.clear-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 30px;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.search-button {
+    background-color: #2196F3;
+}
+
+.search-button:hover {
+    background-color: #0b7dda;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
+}
+
+.clear-button {
+    background-color: #f44336;
+}
+
+.clear-button:hover {
+    background-color: #d32f2f;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(244, 67, 54, 0.3);
+}
+
+@media (max-width: 1200px) {
+    .search-container {
+        top: 0;
+        right: 10px;
+    }
+}
+
+@media (max-width: 768px) {
+    .search-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .search-box,
+    .search-button,
+    .clear-button {
+        width: 100%;
+    }
+.grid-container {
+    padding: 20px 0px; /* Removed horizontal padding */
+    margin-top: 110px;
+}
+
+    .grid-style th {
+        top: 110px;
+    }
+}
+
+</style>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script>
     let lblKPIError = null;
@@ -479,21 +563,7 @@
     });
 </script>
 
-    <!-- Floating Search Container -->
-    <div class="search-container">
-        <asp:TextBox ID="TextBox1" runat="server" 
-            CssClass="search-box" 
-            placeholder="Search KPI..."
-            ToolTip="Type to search across all columns" />
-        <asp:Button ID="Button1" runat="server" Text="🔍" 
-            OnClientClick="filterGrid(); return false;" 
-            CssClass="search-button"
-            ToolTip="Search" />
-        <asp:Button ID="Button2" runat="server" Text="✕" 
-            OnClientClick="clearFilter(); return false;" 
-            CssClass="clear-button"
-            ToolTip="Clear search" />
-    </div>
+  
 
     <div id="kpiModal" class="modal">
         <span class="close-btn" onclick="hidePopup()">×</span>
