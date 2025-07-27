@@ -1,15 +1,21 @@
-﻿Imports System.Data.SqlClient
+Imports System.Data.SqlClient
 Imports System.Web.Script.Services
 Imports System.Web.Services
+
+
 
 Public Class _Default
     Inherits Page
 
     Protected Sub Page_Load(ByVal sender As Object, ByVal e As EventArgs) Handles Me.Load
         If Not IsPostBack Then
+            ' Ensure the GridView is bound to the SqlDataSource
             GridView1.DataBind()
+
         End If
     End Sub
+
+
 
 
     Protected Sub btnSubmit_Click(sender As Object, e As EventArgs) Handles btnSubmit.Click
@@ -28,6 +34,8 @@ Public Class _Default
         Dim unit As String = CleanInput(txtUnit.Text)
         Dim datasource As String = CleanInput(txtDatasource.Text)
         Dim orderText As String = CleanInput(txtOrder.Text)
+        Dim test1Value As String = CleanInput(txtTest1.Text)
+        Dim test2Value As String = CleanInput(txtTest2.Text)
 
         ' Reset all error labels
         lblKPIError.Visible = False
@@ -132,6 +140,8 @@ Public Class _Default
                 SqlDataSource1.UpdateParameters("Unit").DefaultValue = unit
                 SqlDataSource1.UpdateParameters("Datasource").DefaultValue = datasource
                 SqlDataSource1.UpdateParameters("OrderWithinSecton").DefaultValue = orderValue.ToString()
+                SqlDataSource1.UpdateParameters("test1").DefaultValue = test1Value
+                SqlDataSource1.UpdateParameters("test2").DefaultValue = test2Value
                 SqlDataSource1.UpdateParameters("Active").DefaultValue = If(chkActive.Checked, "Y", "N")
                 SqlDataSource1.UpdateParameters("FLAG_DIVISINAL").DefaultValue = If(chkFlagDivisinal.Checked, "Y", "N")
                 SqlDataSource1.UpdateParameters("FLAG_VENDOR").DefaultValue = If(chkFlagVendor.Checked, "Y", "N")
@@ -154,6 +164,8 @@ Public Class _Default
                 SqlDataSource1.InsertParameters("Unit").DefaultValue = unit
                 SqlDataSource1.InsertParameters("Datasource").DefaultValue = datasource
                 SqlDataSource1.InsertParameters("OrderWithinSecton").DefaultValue = orderValue.ToString()
+                SqlDataSource1.InsertParameters("test1").DefaultValue = test1Value
+                SqlDataSource1.InsertParameters("test2").DefaultValue = test2Value
                 SqlDataSource1.InsertParameters("Active").DefaultValue = If(chkActive.Checked, "Y", "N")
                 SqlDataSource1.InsertParameters("FLAG_DIVISINAL").DefaultValue = If(chkFlagDivisinal.Checked, "Y", "N")
                 SqlDataSource1.InsertParameters("FLAG_VENDOR").DefaultValue = If(chkFlagVendor.Checked, "Y", "N")
@@ -217,6 +229,8 @@ Public Class _Default
                         txtUnit.Text = reader("Unit").ToString()
                         txtDatasource.Text = reader("Datasource").ToString()
                         txtOrder.Text = reader("OrderWithinSecton").ToString()
+                        txtTest1.Text = reader("Test1").ToString()
+                        txtTest2.Text = reader("Test2").ToString()
                         chkActive.Checked = reader("Active").ToString().ToUpper() = "Y"
                         chkFlagDivisinal.Checked = reader("FLAG_DIVISINAL").ToString().ToUpper() = "Y"
                         chkFlagVendor.Checked = reader("FLAG_VENDOR").ToString().ToUpper() = "Y"
@@ -253,6 +267,8 @@ Public Class _Default
         txtUnit.Text = ""
         txtDatasource.Text = ""
         txtOrder.Text = ""
+        txtTest1.Text = ""
+        txtTest2.Text = ""
         txtKPIID.Enabled = True
 
         chkActive.Checked = False
@@ -305,5 +321,7 @@ Public Class _Default
             Return False ' Allow server-side validation to handle
         End Try
     End Function
+
+
 
 End Class
