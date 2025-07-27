@@ -1,6 +1,8 @@
 Imports System.Data.SqlClient
 Imports System.Web.Script.Services
 Imports System.Web.Services
+Imports System.Security.Permissions
+Imports System.Text.RegularExpressions
 
 
 
@@ -9,12 +11,47 @@ Public Class _Default
 
     Protected Sub Page_Load(ByVal sender As Object, ByVal e As EventArgs) Handles Me.Load
         If Not IsPostBack Then
+            chkShowActive.Checked = True
+            SqlDataSource1.SelectParameters("Status").DefaultValue = "Y"
+            toggleLabel.InnerText = "Active KPI's:"
+            SortColumn = "KPI or Standalone Metric"
+            SortDirection = "ASC"
+            SqlDataSource1.SelectParameters("SortColumn").DefaultValue = SortColumn
+            SqlDataSource1.SelectParameters("SortDirection").DefaultValue = SortDirection
             ' Ensure the GridView is bound to the SqlDataSource
             GridView1.DataBind()
 
         End If
     End Sub
 
+    Private Property SortColumn As String
+        Get
+            Return If(ViewState("SortColumn"), "KPI or Standalone Metric")
+        End Get
+        Set(value As String)
+            ViewState("SortColumn") = value
+        End Set
+    End Property
+
+    Private Property SortDirection As String
+        Get
+            Return If(ViewState("SortDirection"), "ASC")
+        End Get
+        Set(value As String)
+            ViewState("SortDirection") = value
+        End Set
+    End Property
+
+    Protected Sub chkShowActive_CheckedChanged(sender As Object, e As EventArgs)
+        If chkShowActive.Checked Then
+            SqlDataSource1.SelectParameters("Status").DefaultValue = "Y"
+            toggleLabel.InnerText = "Active KPI's:"
+        Else
+            SqlDataSource1.SelectParameters("Status").DefaultValue = "N"
+            toggleLabel.InnerText = "Inactive KPI's:"
+        End If
+        GridView1.DataBind()
+    End Sub
 
 
 
@@ -201,6 +238,15 @@ Public Class _Default
         If e.CommandName = "EditKPI" Then
             Dim index As Integer = Convert.ToInt32(e.CommandArgument)
             LoadEditData(index)
+        ElseIf e.CommandName = "CustomSort" Then
+            Dim args = e.CommandArgument.ToString().Split("|"c)
+            If args.Length = 2 Then
+                SortColumn = args(0)
+                SortDirection = args(1)
+                SqlDataSource1.SelectParameters("SortColumn").DefaultValue = SortColumn
+                SqlDataSource1.SelectParameters("SortDirection").DefaultValue = SortDirection
+                GridView1.DataBind()
+            End If
         End If
     End Sub
 
@@ -321,6 +367,63 @@ Public Class _Default
             Return False ' Allow server-side validation to handle
         End Try
     End Function
+
+    Protected Sub GridView1_RowCreated(sender As Object, e As GridViewRowEventArgs) Handles GridView1.RowCreated
+        If e.Row.RowType = DataControlRowType.Header Then
+            For i As Integer = 0 To GridView1.Columns.Count - 1
+                Dim tf = TryCast(GridView1.Columns(i), TemplateField)
+                If tf IsNot Nothing AndAlso Not String.IsNullOrEmpty(tf.SortExpression) Then
+                    Dim cell = e.Row.Cells(i)
+                    Dim lblSort As Label = Nothing
+                    Select Case tf.SortExpression
+                        Case "KPI or Standalone Metric"
+                            lblSort = TryCast(cell.FindControl("lblCurrentSortMetric"), Label)
+                        Case "KPI Name"
+                            lblSort = TryCast(cell.FindControl("lblCurrentSortKPIName"), Label)
+                        Case "KPI ID"
+                            lblSort = TryCast(cell.FindControl("lblCurrentSortKPIID"), Label)
+                        Case "KPI Short Description"
+                            lblSort = TryCast(cell.FindControl("lblCurrentSortShortDesc"), Label)
+                        Case "KPI Impact"
+                            lblSort = TryCast(cell.FindControl("lblCurrentSortImpact"), Label)
+                        Case "Numerator Description"
+                            lblSort = TryCast(cell.FindControl("lblCurrentSortNum"), Label)
+                        Case "Denominator Description"
+                            lblSort = TryCast(cell.FindControl("lblCurrentSortDen"), Label)
+                        Case "Unit"
+                            lblSort = TryCast(cell.FindControl("lblCurrentSortUnit"), Label)
+                        Case "Datasource"
+                            lblSort = TryCast(cell.FindControl("lblCurrentSortDS"), Label)
+                        Case "OrderWithinSecton"
+                            lblSort = TryCast(cell.FindControl("lblCurrentSortOrder"), Label)
+                        Case "Active"
+                            lblSort = TryCast(cell.FindControl("lblCurrentSortActive"), Label)
+                        Case "FLAG_DIVISINAL"
+                            lblSort = TryCast(cell.FindControl("lblCurrentSortDiv"), Label)
+                        Case "FLAG_VENDOR"
+                            lblSort = TryCast(cell.FindControl("lblCurrentSortVendor"), Label)
+                        Case "FLAG_ENGAGEMENTID"
+                            lblSort = TryCast(cell.FindControl("lblCurrentSortEng"), Label)
+                        Case "FLAG_CONTRACTID"
+                            lblSort = TryCast(cell.FindControl("lblCurrentSortContract"), Label)
+                        Case "FLAG_COSTCENTRE"
+                            lblSort = TryCast(cell.FindControl("lblCurrentSortCC"), Label)
+                        Case "FLAG_DEUBALvl4"
+                            lblSort = TryCast(cell.FindControl("lblCurrentSortLvl4"), Label)
+                        Case "FLAG_HRID"
+                            lblSort = TryCast(cell.FindControl("lblCurrentSortHRID"), Label)
+                        Case "FLAG_REQUESTID"
+                            lblSort = TryCast(cell.FindControl("lblCurrentSortReq"), Label)
+                    End Select
+                    If lblSort IsNot Nothing AndAlso tf.SortExpression = SortColumn Then
+                        lblSort.Text = If(SortDirection = "DESC", "▲", "▼")
+                    ElseIf lblSort IsNot Nothing Then
+                        lblSort.Text = ""
+                    End If
+                End If
+            Next
+        End If
+    End Sub
 
 
 
