@@ -3,7 +3,7 @@
 
 <asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
     <style>
-      .modal {
+       .modal {
     display: none;
     position: fixed;
     top: 50%;
@@ -500,7 +500,7 @@ table td, table th {
 
     function hideKPIError() {
         if (!lblKPIError) {
-            lblKPIError = document.getElementById('<%=txtKPIID.ClientID = lblKPIError.ClientID%>');
+            lblKPIError = document.getElementById('<%=lblKPIError.ClientID%>');
             if (!lblKPIError) {
                 lblKPIError = document.getElementById('dynamicKPIError') || createKPIErrorLabel();
             }
@@ -543,7 +543,7 @@ table td, table th {
     
     // Press Enter to search
     $(document).ready(function() {
-        $('#<%=txtSearch.ClientID%>').keypress(function(e) {
+        $('#<%=txtKPIID.ClientID%>').keypress(function(e) {
             if (e.which == 13) {
                 filterGrid();
                 return false; // Prevent form submission
@@ -553,19 +553,18 @@ table td, table th {
         // Auto focus search when typing anywhere
         $(document).keypress(function(e) {
             // Only focus if not already focused and not in modal
-            if ($('#<%=txtSearch.ClientID%>').is(':focus') || $('#kpiModal').is(':visible')) return;
+            if ($('#<%=txtKPIID.ClientID%>').is(':focus') || $('#kpiModal').is(':visible')) return;
             
             // Focus search box when user starts typing
             if (e.which >= 48 || e.which == 32) { // Numbers, letters or space
-                $('#<%=txtSearch.ClientID%>').focus();
+                $('#<%=hfKPIID.ClientID%>').focus();
             }
         });
     });
 </script>
 
   
-
-    <div id="kpiModal" class="modal">
+  <div id="kpiModal" class="modal">
         <span class="close-btn" onclick="hidePopup()">×</span>
         <h3><asp:Label ID="lblFormTitle" runat="server" Text="Add KPI" /></h3>
 
@@ -580,6 +579,8 @@ table td, table th {
             <tr><td>Denominator:</td><td><asp:TextBox ID="txtDenom" runat="server" TextMode="MultiLine" Rows="3" /></td></tr>
             <tr><td>Unit:</td><td><asp:TextBox ID="txtUnit" runat="server" /></td></tr>
             <tr><td>Datasource:</td><td><asp:TextBox ID="txtDatasource" runat="server" /></td></tr>
+            <tr><td>Test 1:</td><td><asp:TextBox ID="txtTest1" runat="server" TextMode="MultiLine" Rows="3"  /></td></tr>
+            <tr><td>Test 2:</td><td><asp:TextBox ID="txtTest2" runat="server" TextMode="MultiLine" Rows="3" /></td></tr>
             <tr><td>Active:</td><td><label class="toggle-switch"><asp:CheckBox ID="chkActive" runat="server" /><span class="slider"></span></label></td></tr>
             <tr><td>FLAG_DIVISINAL:</td><td><label class="toggle-switch"><asp:CheckBox ID="chkFlagDivisinal" runat="server" /><span class="slider"></span></label></td></tr>
             <tr><td>FLAG_VENDOR:</td><td><label class="toggle-switch"><asp:CheckBox ID="chkFlagVendor" runat="server" /><span class="slider"></span></label></td></tr>
@@ -596,13 +597,13 @@ table td, table th {
     </div>
 
     <asp:SqlDataSource ID="SqlDataSource1" runat="server"
-        ConnectionString="<%$ ConnectionStrings:MyDatabase %>"
-        SelectCommand="dbo.GetAllKPITable"
-        SelectCommandType="StoredProcedure"
-        InsertCommand="dbo.InsertKPI"
-        InsertCommandType="StoredProcedure"
-        UpdateCommand="dbo.UpdateKPIByID"
-        UpdateCommandType="StoredProcedure">
+    ConnectionString="<%$ ConnectionStrings:MyDatabase %>"
+    SelectCommand="dbo.GetAllKPITable"
+    SelectCommandType="StoredProcedure"
+    InsertCommand="dbo.InsertKPI"
+    InsertCommandType="StoredProcedure"
+    UpdateCommand="dbo.UpdateKPIByID"
+    UpdateCommandType="StoredProcedure">
         <InsertParameters>
             <asp:Parameter Name="KPI_ID" />
             <asp:Parameter Name="KPI_or_Standalone_Metric" />
@@ -614,6 +615,8 @@ table td, table th {
             <asp:Parameter Name="Unit" />
             <asp:Parameter Name="Datasource" />
             <asp:Parameter Name="OrderWithinSecton" />
+             <asp:Parameter Name="test1" />
+             <asp:Parameter Name="test2" />
             <asp:Parameter Name="Active" />
             <asp:Parameter Name="FLAG_DIVISINAL" />
             <asp:Parameter Name="FLAG_VENDOR" />
@@ -636,6 +639,8 @@ table td, table th {
             <asp:Parameter Name="Unit" />
             <asp:Parameter Name="Datasource" />
             <asp:Parameter Name="OrderWithinSecton" />
+            <asp:Parameter Name="test1" />
+            <asp:Parameter Name="test2" />
             <asp:Parameter Name="Active" />
             <asp:Parameter Name="FLAG_DIVISINAL" />
             <asp:Parameter Name="FLAG_VENDOR" />
@@ -647,6 +652,7 @@ table td, table th {
             <asp:Parameter Name="FLAG_REQUESTID" />
         </UpdateParameters>
     </asp:SqlDataSource>
+
      <div class="kpi-table-scroll">
         <!-- New search container -->
         <div class="search-container">
@@ -660,6 +666,7 @@ table td, table th {
                 OnClientClick="clearFilter(); return false;" 
                 CssClass="clear-button" />
         </div>
+
         
         <asp:GridView ID="GridView1" runat="server" AutoGenerateColumns="False" 
             DataSourceID="SqlDataSource1" CssClass="grid-style" 
@@ -684,6 +691,8 @@ table td, table th {
             <asp:BoundField DataField="Unit" HeaderText="Unit" />
             <asp:BoundField DataField="Datasource" HeaderText="Datasource" />
             <asp:BoundField DataField="OrderWithinSecton" HeaderText="Order" />
+            <asp:BoundField DataField="test1" HeaderText="test1" />
+            <asp:BoundField DataField="test2" HeaderText="test2" />
             <asp:TemplateField HeaderText="Active"><ItemTemplate><%# If(Eval("Active").ToString() = "Y", "YES", "NO") %></ItemTemplate></asp:TemplateField>
             <asp:TemplateField HeaderText="FLAG DIVISINAL"><ItemTemplate><%# If(Eval("FLAG_DIVISINAL").ToString() = "Y", "YES", "NO") %></ItemTemplate></asp:TemplateField>
             <asp:TemplateField HeaderText="FLAG VENDOR"><ItemTemplate><%# If(Eval("FLAG_VENDOR").ToString() = "Y", "YES", "NO") %></ItemTemplate></asp:TemplateField>
