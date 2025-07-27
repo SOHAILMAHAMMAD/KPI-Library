@@ -396,6 +396,11 @@ Public Class _Default
                             lblSort = TryCast(cell.FindControl("lblCurrentSortDS"), Label)
                         Case "OrderWithinSecton"
                             lblSort = TryCast(cell.FindControl("lblCurrentSortOrder"), Label)
+                        Case "test1"
+                            lblSort = TryCast(cell.FindControl("lblCurrentSorttest1"), Label)
+                        Case "test2"
+                            lblSort = TryCast(cell.FindControl("lblCurrentSorttest2"), Label)
+
                         Case "Active"
                             lblSort = TryCast(cell.FindControl("lblCurrentSortActive"), Label)
                         Case "FLAG_DIVISINAL"
