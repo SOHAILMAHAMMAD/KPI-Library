@@ -272,6 +272,38 @@ table td, table th {
     }
 }
 
+.sortable-header {
+    position: relative;
+    display: inline-block;
+}
+.sortable-header .sort-arrows {
+    opacity: 0;
+    transition: opacity 0.2s;
+    display: inline-block;
+    margin-left: 5px;
+}
+.sortable-header:hover .sort-arrows {
+    opacity: 1;
+}
+.arrow-icon {
+    background: none;
+    border: none;
+    font-size: 14px;
+    margin-left: 3px;
+    cursor: pointer;
+    color: #2196F3;
+    padding: 0 2px;
+    text-decoration: none;
+}
+.arrow-icon:hover {
+    color: #0b7dda;
+}
+.sort-indicator {
+    font-weight: bold;
+    color: darkorange;
+    margin-left: 3px;
+}
+
 </style>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script>
@@ -686,8 +718,9 @@ table td, table th {
         
         <asp:GridView ID="GridView1" runat="server" AutoGenerateColumns="False" DataSourceID="SqlDataSource1" CssClass="grid-style" OnRowCommand="GridView1_RowCommand"
     OnRowCreated="GridView1_RowCreated" DataKeyNames="KPI ID">
-        <Columns>
-            <asp:TemplateField>
+         <Columns>
+
+        <asp:TemplateField>
             <HeaderTemplate>
                 <asp:Button ID="btnAddKPI" runat="server" Text="+ Add KPI" CssClass="btn-add" OnClick="btnAddKPI_Click" />
             </HeaderTemplate>
@@ -696,8 +729,8 @@ table td, table th {
         CommandName="EditKPI"
         CommandArgument='<%# Container.DataItemIndex %>'
         CssClass="btn-edit" />
-                </ItemTemplate>
-            </asp:TemplateField>
+  </ItemTemplate>
+        </asp:TemplateField>
     <asp:TemplateField HeaderText="Metric" SortExpression="KPI or Standalone Metric">
         <HeaderTemplate>
             <div class="sortable-header">
@@ -853,6 +886,40 @@ table td, table th {
         </HeaderTemplate>
         <ItemTemplate><%# Eval("OrderWithinSecton") %></ItemTemplate>
     </asp:TemplateField>
+    <asp:TemplateField HeaderText="test1" SortExpression="test1">
+    <HeaderTemplate>
+        <div class="sortable-header">
+            test1
+            <span class="sort-arrows">
+                <asp:LinkButton ID="btnSortUptest1" runat="server" CommandName="CustomSort"
+                    CommandArgument="test1|DESC" CssClass="arrow-icon" ToolTip="Sort Descending">&#9650;</asp:LinkButton>
+                <asp:LinkButton ID="btnSortDowntest1" runat="server" CommandName="CustomSort"
+                    CommandArgument="test1|ASC" CssClass="arrow-icon" ToolTip="Sort Ascending">&#9660;</asp:LinkButton>
+            </span>
+            <asp:Label ID="lblCurrentSorttest1" runat="server" CssClass="sort-indicator"></asp:Label>
+        </div>
+    </HeaderTemplate>
+    <ItemTemplate>
+        <%# Eval("test1") %>
+    </ItemTemplate>
+</asp:TemplateField>
+    <asp:TemplateField HeaderText="test2" SortExpression="test2">
+    <HeaderTemplate>
+        <div class="sortable-header">
+            test2
+            <span class="sort-arrows">
+                <asp:LinkButton ID="btnSortUptest2" runat="server" CommandName="CustomSort"
+                    CommandArgument="test2|DESC" CssClass="arrow-icon" ToolTip="Sort Descending">&#9650;</asp:LinkButton>
+                <asp:LinkButton ID="btnSortDowntest2" runat="server" CommandName="CustomSort"
+                    CommandArgument="test2|ASC" CssClass="arrow-icon" ToolTip="Sort Ascending">&#9660;</asp:LinkButton>
+            </span>
+            <asp:Label ID="lblCurrentSorttest2" runat="server" CssClass="sort-indicator"></asp:Label>
+        </div>
+    </HeaderTemplate>
+    <ItemTemplate>
+        <%# Eval("test2") %>
+    </ItemTemplate>
+</asp:TemplateField>
     <asp:TemplateField HeaderText="Active" SortExpression="Active">
         <HeaderTemplate>
             <div class="sortable-header">
@@ -988,7 +1055,8 @@ table td, table th {
         </HeaderTemplate>
         <ItemTemplate><%# If(Eval("FLAG_REQUESTID").ToString() = "Y", "YES", "NO") %></ItemTemplate>
     </asp:TemplateField>
-        </Columns>
+</Columns>
+
     </asp:GridView>
     </div>  
          </div>
