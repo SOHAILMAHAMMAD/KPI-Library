@@ -1,8 +1,9 @@
 Imports System.Data.SqlClient
-Imports System.Web.Script.Services
-Imports System.Web.Services
+Imports System.IO
 Imports System.Security.Permissions
 Imports System.Text.RegularExpressions
+Imports System.Web.Script.Services
+Imports System.Web.Services
 
 
 
@@ -20,6 +21,7 @@ Public Class _Default
             SqlDataSource1.SelectParameters("SortDirection").DefaultValue = SortDirection
             ' Ensure the GridView is bound to the SqlDataSource
             GridView1.DataBind()
+
 
         End If
     End Sub
@@ -51,6 +53,7 @@ Public Class _Default
             toggleLabel.InnerText = "Inactive KPI's:"
         End If
         GridView1.DataBind()
+
     End Sub
 
 
@@ -251,8 +254,8 @@ Public Class _Default
     End Sub
 
     Private Sub LoadEditData(rowIndex As Integer)
-        Dim row As GridViewRow = GridView1.Rows(rowIndex)
-        Dim kpiId As String = row.Cells(1).Text.Trim()
+        Dim kpiId As String = GridView1.DataKeys(rowIndex).Value.ToString()
+
 
         hfIsEdit.Value = "true"
         hfKPIID.Value = kpiId
@@ -338,6 +341,130 @@ Public Class _Default
         lblFormTitle.Text = "Add KPI"
         ScriptManager.RegisterStartupScript(Me, Me.GetType(), "ShowModal_" & Guid.NewGuid().ToString(), "showPopup(); hideKPIError();", True)
     End Sub
+
+    Protected Sub btnExport_Click(sender As Object, e As EventArgs)
+        Try
+            ' Get fresh data using the same logic as GridView
+            Dim dt As DataTable = GetDataTableFromDataSource()
+            If dt Is Nothing Then
+                ScriptManager.RegisterStartupScript(Me, Me.GetType(), "ExportError", "alert('Error retrieving data for export.');", True)
+                Return
+            End If
+
+            ' Define the exact column order you want in Excel (matches your form)
+            Dim exportColumnMap As New Dictionary(Of String, String) From {
+            {"KPI ID", "KPI ID"},
+            {"OrderWithinSecton", "Order"},
+            {"KPI or Standalone Metric", "Metric"},
+            {"KPI Name", "Name"},
+            {"KPI Short Description", "Short Desc"},
+            {"KPI Impact", "Impact"},
+            {"Numerator Description", "Numerator"},
+            {"Denominator Description", "Denominator"},
+            {"Unit", "Unit"},
+            {"Datasource", "Datasource"},
+            {"test1", "Test 1"},
+            {"test2", "Test 2"},
+            {"Active", "Active"},
+            {"FLAG_DIVISINAL", "FLAG_DIVISINAL"},
+            {"FLAG_VENDOR", "FLAG_VENDOR"},
+            {"FLAG_ENGAGEMENTID", "FLAG_ENGAGEMENTID"},
+            {"FLAG_CONTRACTID", "FLAG_CONTRACTID"},
+            {"FLAG_COSTCENTRE", "FLAG_COSTCENTRE"},
+            {"FLAG_DEUBALvl4", "FLAG_DEUBALvl4"},
+            {"FLAG_HRID", "FLAG_HRID"},
+            {"FLAG_REQUESTID", "FLAG_REQUESTID"}
+        }
+
+            ' Prepare response for Excel download
+            Response.Clear()
+            Response.Buffer = True
+            Response.Charset = ""
+            Response.ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            Response.AddHeader("content-disposition", "attachment;filename=KPI_Data_" & DateTime.Now.ToString("yyyyMMdd_HHmmss") & ".xlsx")
+
+            Using sw As New StringWriter()
+                Using hw As New HtmlTextWriter(sw)
+
+                    ' Write table header
+                    hw.Write("<table border='1'>")
+                    hw.Write("<tr>")
+                    For Each kvp In exportColumnMap
+                        hw.Write("<th>{0}</th>", kvp.Value) ' Display name
+                    Next
+                    hw.Write("</tr>")
+
+                    ' Write data rows
+                    If dt.Rows.Count = 0 Then
+                        ' Optional: write one blank row
+                        hw.Write("<tr>")
+                        For i As Integer = 0 To exportColumnMap.Count - 1
+                            hw.Write("<td></td>")
+                        Next
+                        hw.Write("</tr>")
+                    Else
+                        For Each row As DataRow In dt.Rows
+                            hw.Write("<tr>")
+                            For Each kvp In exportColumnMap
+                                Dim colName As String = kvp.Key
+                                Dim value As String = ""
+
+                                If dt.Columns.Contains(colName) Then
+                                    value = row(colName).ToString()
+                                    ' Convert Y/N to YES/NO for consistency
+                                    If colName = "Active" OrElse colName.StartsWith("FLAG_") Then
+                                        value = If(value.ToUpper() = "Y", "YES", "NO")
+                                    End If
+                                End If
+
+                                hw.Write("<td>{0}</td>", Server.HtmlEncode(value))
+                            Next
+                            hw.Write("</tr>")
+                        Next
+                    End If
+
+                    hw.Write("</table>")
+                End Using
+
+                Response.Output.Write(sw.ToString())
+                Response.Flush()
+                Response.End()
+            End Using
+
+        Catch ex As Exception
+            System.Diagnostics.Debug.WriteLine("Export Error: " & ex.Message & Environment.NewLine & ex.StackTrace)
+            ScriptManager.RegisterStartupScript(Me, Me.GetType(), "ExportError", "alert('Error during export: " & ex.Message.Replace("'", "\'") & "');", True)
+        End Try
+    End Sub
+
+    ' Helper to get data directly from SqlDataSource
+    Private Function GetDataTableFromDataSource() As DataTable
+        Dim dt As New DataTable()
+        Try
+            SqlDataSource1.SelectParameters("Status").DefaultValue = If(chkShowActive.Checked, "Y", "N")
+            SqlDataSource1.SelectParameters("SortColumn").DefaultValue = SortColumn
+            SqlDataSource1.SelectParameters("SortDirection").DefaultValue = SortDirection
+
+            Using conn As New SqlConnection(ConfigurationManager.ConnectionStrings("MyDatabase").ConnectionString)
+                Using cmd As New SqlCommand()
+                    cmd.Connection = conn
+                    cmd.CommandText = "dbo.GetAllKPITable"
+                    cmd.CommandType = CommandType.StoredProcedure
+                    cmd.Parameters.AddWithValue("@Status", SqlDataSource1.SelectParameters("Status").DefaultValue)
+                    cmd.Parameters.AddWithValue("@SortColumn", SqlDataSource1.SelectParameters("SortColumn").DefaultValue)
+                    cmd.Parameters.AddWithValue("@SortDirection", SqlDataSource1.SelectParameters("SortDirection").DefaultValue)
+
+                    conn.Open()
+                    Using da As New SqlDataAdapter(cmd)
+                        da.Fill(dt)
+                    End Using
+                End Using
+            End Using
+        Catch ex As Exception
+            System.Diagnostics.Debug.WriteLine("Error fetching data for export: " & ex.Message)
+        End Try
+        Return dt
+    End Function
 
     <WebMethod(EnableSession:=False)>
     <ScriptMethod(ResponseFormat:=ResponseFormat.Json)>
