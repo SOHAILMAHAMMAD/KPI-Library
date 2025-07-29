@@ -703,6 +703,9 @@ table td, table th {
             <asp:Button ID="btnClear" runat="server" Text="Clear" 
                 OnClientClick="clearFilter(); return false;" 
                 CssClass="clear-button" />
+            <asp:Button ID="btnExport" runat="server" Text="Export to Excel" 
+        CssClass="search-button" OnClick="btnExport_Click" 
+        style="background-color: #4CAF50;" />
         </div>
 
           <div class="grid-container">
@@ -717,7 +720,7 @@ table td, table th {
 </div>
         
         <asp:GridView ID="GridView1" runat="server" AutoGenerateColumns="False" DataSourceID="SqlDataSource1" CssClass="grid-style" OnRowCommand="GridView1_RowCommand"
-    OnRowCreated="GridView1_RowCreated" DataKeyNames="KPI ID">
+    OnRowCreated="GridView1_RowCreated" DataKeyNames="KPI ID" ShowHeaderWhenEmpty="true"  EmptyDataText="No records found" EmptyDataRowStyle-CssClass="empty-row" EmptyDataRowStyle-HorizontalAlign="Center" EmptyDataRowStyle-ForeColor="#999"> 
          <Columns>
 
         <asp:TemplateField>
@@ -1058,7 +1061,14 @@ table td, table th {
 </Columns>
 
     </asp:GridView>
-    </div>  
+    </div> 
+         <div id="noDataMessage" runat="server" visible="false" style="text-align: center; padding: 20px; color: #666; font-size: 16px;">
+        <h3>No data found.</h3>
+    </div>
+         <div id="Div1" runat="server" visible="false" style="text-align: center; padding: 20px; color: #666; font-size: 16px;">
+    <h3>No data found.</h3>
+</div>
+
          </div>
     
 </asp:Content>
