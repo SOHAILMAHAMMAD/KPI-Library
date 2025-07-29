@@ -3,30 +3,40 @@
 
 <asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
     <style>
-       .modal {
+       /* Modal Popup - Centered, Smooth, Responsive */
+/* === MODAL POPUP === */
+.modal {
     display: none;
     position: fixed;
     top: 50%;
     left: 50%;
     width: 800px;
     height: 500px;
+    max-height: 80vh;
     overflow-y: auto;
     background-color: #fff;
     transform: translate(-50%, -50%);
     border-radius: 12px;
     padding: 20px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     z-index: 1000;
     box-sizing: border-box;
 }
 
 .close-btn {
     float: right;
-    font-size: 20px;
+    font-size: 24px;
     font-weight: bold;
     cursor: pointer;
+    color: #aaa;
+    line-height: 1;
 }
 
+.close-btn:hover {
+    color: #000;
+}
+
+/* === ERROR LABELS === */
 .error-span {
     color: red;
     font-size: 12px;
@@ -39,11 +49,14 @@
     display: inline;
 }
 
+/* === TOGGLE SWITCH (Modern & Compact) === */
 .toggle-switch {
     position: relative;
     display: inline-block;
-    width: 40px;
-    height: 20px;
+    width: 50px;
+    height: 24px;
+    margin: 0 8px;
+    vertical-align: middle;
 }
 
 .toggle-switch input {
@@ -60,47 +73,58 @@
     right: 0;
     bottom: 0;
     background-color: #ccc;
-    transition: .4s;
-    border-radius: 20px;
+    transition: 0.3s;
+    border-radius: 12px;
+}
+
+.slider:before {
+    content: "";
+    position: absolute;
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
 }
 
 .toggle-switch input:checked + .slider {
     background-color: #2196F3;
 }
 
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 16px;
-    width: 16px;
-    left: 2px;
-    bottom: 2px;
-    background-color: white;
-    transition: .4s;
-    border-radius: 50%;
-}
-
 .toggle-switch input:checked + .slider:before {
-    transform: translateX(20px);
+    transform: translateX(26px);
 }
 
+/* === BUTTONS === */
 .btn-add, .btn-edit {
     padding: 6px 12px;
     border: none;
     border-radius: 4px;
     color: white;
     cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
 }
 
 .btn-add {
     background-color: #4CAF50;
 }
 
+.btn-add:hover {
+    background-color: #45a049;
+}
+
 .btn-edit {
     background-color: #2196F3;
 }
 
+.btn-edit:hover {
+    background-color: #0b7dda;
+}
 
+/* === TABLE STYLES === */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -108,7 +132,9 @@ table {
 
 table td, table th {
     padding: 8px;
-    border: 1px solid #ccc;
+    border: 1px solid #ddd;
+    text-align: left;
+    white-space: nowrap;
 }
 
 .grid-style {
@@ -117,55 +143,101 @@ table td, table th {
     table-layout: auto;
 }
 
-.grid-style td,
-.grid-style th {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-    white-space: nowrap;
-}
-
-
 .grid-style th {
     position: sticky;
-    top: 50px; 
+    top: 50px;
     background-color: #f2f2f2;
     z-index: 998;
+    font-weight: 600;
+    color: #333;
 }
 
-/* Table scroll area */
+/* === TABLE SCROLL CONTAINER === */
 .grid-scroll-container {
-    max-height: calc(100vh - 110px); 
+    max-height: calc(100vh - 110px);
     overflow-y: auto;
     border: 1px solid #ddd;
     border-radius: 4px;
-    position: relative;
 }
 
+/* === MODAL INPUTS === */
 .modal input[type="text"],
 .modal textarea {
     width: 100%;
     box-sizing: border-box;
 }
 
-
+/* === SEARCH CONTAINER (Fixed, Sticky) === */
 .search-container {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     background: white;
-    padding: 10px 20px;
+    padding: 12px 20px;
     display: flex;
-    gap: 10px;
     align-items: center;
+    gap: 12px;
     z-index: 1000;
-    border-bottom: 1px solid #ddd;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid #e0e0e0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     height: 60px;
     box-sizing: border-box;
 }
 
+.search-box {
+    flex: 1;
+    max-width: 300px;
+    padding: 10px 15px;
+    border: 1px solid #d0d0d0;
+    border-radius: 30px;
+    font-size: 14px;
+    background: #f9f9f9;
+    transition: all 0.3s ease;
+}
+
+.search-box:focus {
+    outline: none;
+    width: 280px;
+    border-color: #2196F3;
+    background: white;
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+}
+
+.search-button,
+.clear-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 30px;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    min-width: 90px;
+}
+
+.search-button {
+    background-color: #2196F3;
+}
+
+.search-button:hover {
+    background-color: #0b7dda;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(33, 150, 243, 0.2);
+}
+
+.clear-button {
+    background-color: #f44336;
+}
+
+.clear-button:hover {
+    background-color: #d32f2f;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(244, 67, 54, 0.2);
+}
+
+/* === PAGE HEADER (Below Search) === */
 .page-header {
     display: flex;
     justify-content: space-between;
@@ -174,7 +246,7 @@ table td, table th {
     background: white;
     border-bottom: 1px solid #eee;
     position: fixed;
-    top: 60px; 
+    top: 60px;
     left: 0;
     right: 0;
     z-index: 999;
@@ -188,120 +260,86 @@ table td, table th {
     color: #333;
 }
 
+/* === GRID CONTAINER (Main Table Area) === */
 .grid-container {
     padding: 20px;
-    margin-top: 110px; 
+    margin-top: 110px;
 }
 
-.search-box {
-    padding: 10px 15px;
-    border: 1px solid #e0e0e0;
-    border-radius: 30px;
-    width: 220px;
-    font-size: 14px;
-    background: #f9f9f9;
-    transition: all 0.3s;
-    box-sizing: border-box;
+/* === SORTABLE HEADERS (Clean & Interactive) === */
+.sortable-header {
+    position: relative;
+    display: inline-block;
+    cursor: default;
 }
 
-.search-box:focus {
-    width: 250px;
-    transition: width 0.3s ease-in-out;
+.sortable-header .sort-arrows {
+    opacity: 0;
+    transition: opacity 0.2s;
+    margin-left: 6px;
 }
 
-.search-button,
-.clear-button {
-    padding: 8px 16px;
+.sortable-header:hover .sort-arrows {
+    opacity: 1;
+}
+
+.arrow-icon {
+    background: none;
     border: none;
-    border-radius: 30px;
-    color: white;
-    cursor: pointer;
     font-size: 14px;
-    font-weight: 600;
-    transition: all 0.3s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    color: #666;
+    cursor: pointer;
+    padding: 0 2px;
+    text-decoration: none;
 }
 
-.search-button {
-    background-color: #2196F3;
+.arrow-icon:hover {
+    color: #2196F3;
 }
 
-.search-button:hover {
-    background-color: #0b7dda;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
+.sort-indicator {
+    font-weight: bold;
+    color: darkorange;
+    margin-left: 4px;
 }
 
-.clear-button {
-    background-color: #f44336;
-}
-
-.clear-button:hover {
-    background-color: #d32f2f;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(244, 67, 54, 0.3);
-}
-
-@media (max-width: 1200px) {
-    .search-container {
-        top: 0;
-        right: 10px;
-    }
-}
-
+/* === RESPONSIVE DESIGN === */
 @media (max-width: 768px) {
     .search-container {
         flex-direction: column;
         align-items: stretch;
+        padding: 12px;
+        gap: 8px;
     }
 
     .search-box,
     .search-button,
     .clear-button {
         width: 100%;
+        max-width: none;
+        margin: 0;
     }
-.grid-container {
-    padding: 20px 0px; /* Removed horizontal padding */
-    margin-top: 110px;
-}
+
+    .toggle-switch {
+        margin: 0 0 0 10px;
+    }
+
+    .grid-container {
+        padding: 15px 10px;
+        margin-top: 120px;
+    }
 
     .grid-style th {
-        top: 110px;
+        top: 120px;
+        font-size: 13px;
+        padding: 6px 8px;
     }
-}
 
-.sortable-header {
-    position: relative;
-    display: inline-block;
-}
-.sortable-header .sort-arrows {
-    opacity: 0;
-    transition: opacity 0.2s;
-    display: inline-block;
-    margin-left: 5px;
-}
-.sortable-header:hover .sort-arrows {
-    opacity: 1;
-}
-.arrow-icon {
-    background: none;
-    border: none;
-    font-size: 14px;
-    margin-left: 3px;
-    cursor: pointer;
-    color: #2196F3;
-    padding: 0 2px;
-    text-decoration: none;
-}
-.arrow-icon:hover {
-    color: #0b7dda;
-}
-.sort-indicator {
-    font-weight: bold;
-    color: darkorange;
-    margin-left: 3px;
+    .modal {
+        width: 90vw;
+        height: 75vh;
+        padding: 15px;
+    }
 }
 
 </style>
@@ -706,18 +744,16 @@ table td, table th {
             <asp:Button ID="btnExport" runat="server" Text="Export to Excel" 
         CssClass="search-button" OnClick="btnExport_Click" 
         style="background-color: #4CAF50;" />
+            <span id="toggleLabel" runat="server" style="font-weight:bold; margin-left: 20px;">Active</span>
+    <label class="toggle-switch" style="vertical-align:middle;">
+        <asp:CheckBox ID="chkShowActive" runat="server" AutoPostBack="true" OnCheckedChanged="chkShowActive_CheckedChanged" />
+        <span class="slider"></span>
+    </label>
         </div>
 
           <div class="grid-container">
 
-           <div style="margin-bottom:18px;">
-    <span id="toggleLabel" runat="server" style="font-weight:bold;">Active</span>
-    <label class="toggle-switch" style="vertical-align:middle;margin:0 10px;">
-        <asp:CheckBox ID="chkShowActive" runat="server" AutoPostBack="true" OnCheckedChanged="chkShowActive_CheckedChanged" />
-        <span class="slider"></span>
-    </label>
-    
-</div>
+           
         
         <asp:GridView ID="GridView1" runat="server" AutoGenerateColumns="False" DataSourceID="SqlDataSource1" CssClass="grid-style" OnRowCommand="GridView1_RowCommand"
     OnRowCreated="GridView1_RowCreated" DataKeyNames="KPI ID" ShowHeaderWhenEmpty="true"  EmptyDataText="No records found" EmptyDataRowStyle-CssClass="empty-row" EmptyDataRowStyle-HorizontalAlign="Center" EmptyDataRowStyle-ForeColor="#999"> 
