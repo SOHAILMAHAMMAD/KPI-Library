@@ -116,14 +116,60 @@
     background-color: #45a049;
 }
 
+/* === EDIT BUTTON (Enhanced) === */
 .btn-edit {
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
     background-color: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(33, 150, 243, 0.2);
 }
 
 .btn-edit:hover {
     background-color: #0b7dda;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
 }
 
+.btn-edit:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(33, 150, 243, 0.2);
+}
+
+
+/* === DELETE BUTTON (Enhanced) === */
+.btn-delete {
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    background-color: #f44336;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(244, 67, 54, 0.2);
+}
+
+.btn-delete:hover {
+    background-color: #d32f2f;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(244, 67, 54, 0.3);
+}
+
+.btn-delete:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(244, 67, 54, 0.2);
+}
 /* === TABLE STYLES === */
 table {
     width: 100%;
@@ -633,6 +679,7 @@ table td, table th {
     });
 </script>
 
+
   
   <div id="kpiModal" class="modal">
         <span class="close-btn" onclick="hidePopup()">×</span>
@@ -651,6 +698,25 @@ table td, table th {
             <tr><td>Datasource:</td><td><asp:TextBox ID="txtDatasource" runat="server" /></td></tr>
             <tr><td>Test 1:</td><td><asp:TextBox ID="txtTest1" runat="server" TextMode="MultiLine" Rows="3"  /></td></tr>
             <tr><td>Test 2:</td><td><asp:TextBox ID="txtTest2" runat="server" TextMode="MultiLine" Rows="3" /></td></tr>
+             <tr>
+        <td>Objective/Subjective:</td>
+        <td>
+            <asp:DropDownList ID="ddlObjectiveSubjective" runat="server" CssClass="form-control">
+                <asp:ListItem Value="" Text="-- Select --" Selected="True"></asp:ListItem>
+                <asp:ListItem Value="Objective" Text="Objective"></asp:ListItem>
+                <asp:ListItem Value="Subjective" Text="Subjective"></asp:ListItem>
+            </asp:DropDownList>
+        </td>
+    </tr>
+
+    <!-- Comments as Multi-line Textbox -->
+    <tr>
+        <td>Comments:</td>
+        <td>
+            <asp:TextBox ID="txtComments" runat="server" TextMode="MultiLine" Rows="3" Columns="50" 
+                         placeholder=" comments..." />
+        </td>
+    </tr>
             <tr><td>Active:</td><td><label class="toggle-switch"><asp:CheckBox ID="chkActive" runat="server" /><span class="slider"></span></label></td></tr>
             <tr><td>FLAG_DIVISINAL:</td><td><label class="toggle-switch"><asp:CheckBox ID="chkFlagDivisinal" runat="server" /><span class="slider"></span></label></td></tr>
             <tr><td>FLAG_VENDOR:</td><td><label class="toggle-switch"><asp:CheckBox ID="chkFlagVendor" runat="server" /><span class="slider"></span></label></td></tr>
@@ -693,6 +759,8 @@ table td, table th {
             <asp:Parameter Name="OrderWithinSecton" />
              <asp:Parameter Name="test1" />
              <asp:Parameter Name="test2" />
+            <asp:Parameter Name="Objective_Subjective" />
+            <asp:Parameter Name="Comments" />
             <asp:Parameter Name="Active" />
             <asp:Parameter Name="FLAG_DIVISINAL" />
             <asp:Parameter Name="FLAG_VENDOR" />
@@ -717,6 +785,8 @@ table td, table th {
             <asp:Parameter Name="OrderWithinSecton" />
             <asp:Parameter Name="test1" />
             <asp:Parameter Name="test2" />
+            <asp:Parameter Name="Objective_Subjective" />
+            <asp:Parameter Name="Comments" />
             <asp:Parameter Name="Active" />
             <asp:Parameter Name="FLAG_DIVISINAL" />
             <asp:Parameter Name="FLAG_VENDOR" />
@@ -751,6 +821,8 @@ table td, table th {
     </label>
         </div>
 
+         </div>
+
           <div class="grid-container">
 
            
@@ -758,18 +830,23 @@ table td, table th {
         <asp:GridView ID="GridView1" runat="server" AutoGenerateColumns="False" DataSourceID="SqlDataSource1" CssClass="grid-style" OnRowCommand="GridView1_RowCommand"
     OnRowCreated="GridView1_RowCreated" DataKeyNames="KPI ID" ShowHeaderWhenEmpty="true"  EmptyDataText="No records found" EmptyDataRowStyle-CssClass="empty-row" EmptyDataRowStyle-HorizontalAlign="Center" EmptyDataRowStyle-ForeColor="#999"> 
          <Columns>
-
-        <asp:TemplateField>
-            <HeaderTemplate>
-                <asp:Button ID="btnAddKPI" runat="server" Text="+ Add KPI" CssClass="btn-add" OnClick="btnAddKPI_Click" />
-            </HeaderTemplate>
-            <ItemTemplate>
-    <asp:Button ID="btnEdit" runat="server" Text="Edit"
-        CommandName="EditKPI"
-        CommandArgument='<%# Container.DataItemIndex %>'
-        CssClass="btn-edit" />
-  </ItemTemplate>
-        </asp:TemplateField>
+<asp:TemplateField>
+    <HeaderTemplate>
+        <asp:Button ID="btnAddKPI" runat="server" Text="+ Add KPI" CssClass="btn-add" OnClick="btnAddKPI_Click" />
+    </HeaderTemplate>
+    <ItemTemplate>
+        <asp:Button ID="btnEdit" runat="server" Text="Edit"
+            CommandName="EditKPI"
+            CommandArgument='<%# Container.DataItemIndex %>'
+            CssClass="btn-edit" />
+        &nbsp;
+        <asp:Button ID="btnDelete" runat="server" Text="Delete"
+            CommandName="DeleteKPI"
+            CommandArgument='<%# Container.DataItemIndex %>'
+            OnClientClick="return confirm('Are you sure you want to delete this KPI? This action cannot be undone.');"
+            CssClass="btn-delete" />
+    </ItemTemplate>
+</asp:TemplateField>
     <asp:TemplateField HeaderText="Metric" SortExpression="KPI or Standalone Metric">
         <HeaderTemplate>
             <div class="sortable-header">
@@ -959,6 +1036,43 @@ table td, table th {
         <%# Eval("test2") %>
     </ItemTemplate>
 </asp:TemplateField>
+
+             <asp:TemplateField HeaderText="Objective/Subjective" SortExpression="Objective/Subjective">
+    <HeaderTemplate>
+        <div class="sortable-header">
+            Objective/Subjective
+            <span class="sort-arrows">
+                <asp:LinkButton ID="btnSortUpObjSub" runat="server" CommandName="CustomSort"
+                    CommandArgument="Objective/Subjective|DESC" CssClass="arrow-icon" ToolTip="Sort Descending">&#9650;</asp:LinkButton>
+                <asp:LinkButton ID="btnSortDownObjSub" runat="server" CommandName="CustomSort"
+                    CommandArgument="Objective_or_Subjective|ASC" CssClass="arrow-icon" ToolTip="Sort Ascending">&#9660;</asp:LinkButton>
+            </span>
+            <asp:Label ID="lblCurrentSortObjSub" runat="server" CssClass="sort-indicator"></asp:Label>
+        </div>
+    </HeaderTemplate>
+    <ItemTemplate>
+        <%# Eval("Objective/Subjective") %>
+    </ItemTemplate>
+</asp:TemplateField>
+
+             <asp:TemplateField HeaderText="Comments" SortExpression="Comments">
+    <HeaderTemplate>
+        <div class="sortable-header">
+            Comments
+            <span class="sort-arrows">
+                <asp:LinkButton ID="btnSortUpComments" runat="server" CommandName="CustomSort"
+                    CommandArgument="Comments|DESC" CssClass="arrow-icon" ToolTip="Sort Descending">&#9650;</asp:LinkButton>
+                <asp:LinkButton ID="btnSortDownComments" runat="server" CommandName="CustomSort"
+                    CommandArgument="Comments|ASC" CssClass="arrow-icon" ToolTip="Sort Ascending">&#9660;</asp:LinkButton>
+            </span>
+            <asp:Label ID="lblCurrentSortComments" runat="server" CssClass="sort-indicator"></asp:Label>
+        </div>
+    </HeaderTemplate>
+    <ItemTemplate>
+        <%# Eval("Comments") %>
+    </ItemTemplate>
+</asp:TemplateField>
+
     <asp:TemplateField HeaderText="Active" SortExpression="Active">
         <HeaderTemplate>
             <div class="sortable-header">
@@ -1105,6 +1219,6 @@ table td, table th {
     <h3>No data found.</h3>
 </div>
 
-         </div>
+    
     
 </asp:Content>
