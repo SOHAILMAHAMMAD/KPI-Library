@@ -76,6 +76,8 @@ Public Class _Default
         Dim orderText As String = CleanInput(txtOrder.Text)
         Dim test1Value As String = CleanInput(txtTest1.Text)
         Dim test2Value As String = CleanInput(txtTest2.Text)
+        Dim objectiveSubjectiveValue As String = CleanInput(ddlObjectiveSubjective.SelectedValue)
+        Dim commentsValue As String = CleanInput(txtComments.Text)
 
         ' Reset all error labels
         lblKPIError.Visible = False
@@ -182,6 +184,8 @@ Public Class _Default
                 SqlDataSource1.UpdateParameters("OrderWithinSecton").DefaultValue = orderValue.ToString()
                 SqlDataSource1.UpdateParameters("test1").DefaultValue = test1Value
                 SqlDataSource1.UpdateParameters("test2").DefaultValue = test2Value
+                SqlDataSource1.UpdateParameters("Objective_Subjective").DefaultValue = objectiveSubjectiveValue
+                SqlDataSource1.UpdateParameters("Comments").DefaultValue = commentsValue
                 SqlDataSource1.UpdateParameters("Active").DefaultValue = If(chkActive.Checked, "Y", "N")
                 SqlDataSource1.UpdateParameters("FLAG_DIVISINAL").DefaultValue = If(chkFlagDivisinal.Checked, "Y", "N")
                 SqlDataSource1.UpdateParameters("FLAG_VENDOR").DefaultValue = If(chkFlagVendor.Checked, "Y", "N")
@@ -206,6 +210,8 @@ Public Class _Default
                 SqlDataSource1.InsertParameters("OrderWithinSecton").DefaultValue = orderValue.ToString()
                 SqlDataSource1.InsertParameters("test1").DefaultValue = test1Value
                 SqlDataSource1.InsertParameters("test2").DefaultValue = test2Value
+                SqlDataSource1.InsertParameters("Objective_Subjective").DefaultValue = objectiveSubjectiveValue
+                SqlDataSource1.InsertParameters("Comments").DefaultValue = commentsValue
                 SqlDataSource1.InsertParameters("Active").DefaultValue = If(chkActive.Checked, "Y", "N")
                 SqlDataSource1.InsertParameters("FLAG_DIVISINAL").DefaultValue = If(chkFlagDivisinal.Checked, "Y", "N")
                 SqlDataSource1.InsertParameters("FLAG_VENDOR").DefaultValue = If(chkFlagVendor.Checked, "Y", "N")
@@ -250,6 +256,33 @@ Public Class _Default
                 SqlDataSource1.SelectParameters("SortDirection").DefaultValue = SortDirection
                 GridView1.DataBind()
             End If
+        ElseIf e.CommandName = "DeleteKPI" Then
+            ' Get the row index from CommandArgument
+            Dim index As Integer = Convert.ToInt32(e.CommandArgument)
+            ' Get the KPI ID using DataKeys
+            Dim kpiId As String = GridView1.DataKeys(index).Value.ToString()
+
+            If Not String.IsNullOrEmpty(kpiId) Then
+                Try
+                    ' Use SqlConnection and SqlCommand to call the stored procedure
+                    Using conn As New SqlConnection(ConfigurationManager.ConnectionStrings("MyDatabase").ConnectionString)
+                        Using cmd As New SqlCommand("DeleteKPIByID", conn)
+                            cmd.CommandType = CommandType.StoredProcedure
+                            cmd.Parameters.AddWithValue("@KPI_ID", kpiId.Trim())
+                            conn.Open()
+                            cmd.ExecuteNonQuery()
+                        End Using
+                    End Using
+
+                    ' Show success message and refresh GridView
+                    ScriptManager.RegisterStartupScript(Me, Me.GetType(), "DeleteSuccess", "alert('KPI deleted successfully!');", True)
+                    GridView1.DataBind()
+                Catch ex As Exception
+                    ' Log error and show message to user
+                    System.Diagnostics.Debug.WriteLine("Delete Error: " & ex.Message & vbCrLf & ex.StackTrace)
+                    ScriptManager.RegisterStartupScript(Me, Me.GetType(), "DeleteError", "alert('Error deleting KPI: " & ex.Message.Replace("'", "\'") & "');", True)
+                End Try
+            End If
         End If
     End Sub
 
@@ -280,6 +313,7 @@ Public Class _Default
                         txtOrder.Text = reader("OrderWithinSecton").ToString()
                         txtTest1.Text = reader("Test1").ToString()
                         txtTest2.Text = reader("Test2").ToString()
+                        txtComments.Text = reader("Comments").ToString()
                         chkActive.Checked = reader("Active").ToString().ToUpper() = "Y"
                         chkFlagDivisinal.Checked = reader("FLAG_DIVISINAL").ToString().ToUpper() = "Y"
                         chkFlagVendor.Checked = reader("FLAG_VENDOR").ToString().ToUpper() = "Y"
@@ -318,6 +352,16 @@ Public Class _Default
         txtOrder.Text = ""
         txtTest1.Text = ""
         txtTest2.Text = ""
+        If ddlObjectiveSubjective.Items.Count > 0 Then
+            ddlObjectiveSubjective.ClearSelection()
+            If ddlObjectiveSubjective.Items.FindByValue("") IsNot Nothing Then
+                ddlObjectiveSubjective.SelectedValue = ""
+            Else
+                ddlObjectiveSubjective.SelectedIndex = 0 ' Fallback
+            End If
+        End If
+
+        txtComments.Text = ""
         txtKPIID.Enabled = True
 
         chkActive.Checked = False
@@ -365,6 +409,8 @@ Public Class _Default
             {"Datasource", "Datasource"},
             {"test1", "Test 1"},
             {"test2", "Test 2"},
+            {"Objective/Subjective", "Evaluation Type"},
+            {"Comments", "Additional Comments"},
             {"Active", "Active"},
             {"FLAG_DIVISINAL", "FLAG_DIVISINAL"},
             {"FLAG_VENDOR", "FLAG_VENDOR"},
@@ -527,7 +573,10 @@ Public Class _Default
                             lblSort = TryCast(cell.FindControl("lblCurrentSorttest1"), Label)
                         Case "test2"
                             lblSort = TryCast(cell.FindControl("lblCurrentSorttest2"), Label)
-
+                        Case "Objective/Subjective"
+                            lblSort = TryCast(cell.FindControl("lblCurrentSortObjSub"), Label)
+                        Case "Comments"
+                            lblSort = TryCast(cell.FindControl("lblCurrentSortComments"), Label)
                         Case "Active"
                             lblSort = TryCast(cell.FindControl("lblCurrentSortActive"), Label)
                         Case "FLAG_DIVISINAL"
