@@ -99,3 +99,158 @@ END;
 GO
 
 
+
+
+
+Search Export as expected changes in store proc 
+
+USE [sohail]
+GO
+
+ALTER PROCEDURE [dbo].[GetAllKPITable]
+    @Status CHAR(1) = NULL,
+    @SortColumn NVARCHAR(50) = NULL,
+    @SortDirection NVARCHAR(4) = NULL,
+    @Search NVARCHAR(100) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Set default sort column
+    IF @SortColumn IS NULL OR LTRIM(RTRIM(@SortColumn)) = ''
+        SET @SortColumn = '[KPI or Standalone Metric]';
+
+    -- Validate SortDirection
+    IF @SortDirection IS NULL OR UPPER(LTRIM(RTRIM(@SortDirection))) NOT IN ('ASC', 'DESC')
+        SET @SortDirection = 'ASC';
+
+    DECLARE @sql NVARCHAR(MAX);
+
+    -- Build dynamic SQL
+    SET @sql = N'
+    SELECT
+        [KPI ID],
+        [KPI or Standalone Metric],
+        [KPI Name],
+        [KPI Short Description],
+        [KPI Impact],
+        [Numerator Description],
+        [Denominator Description],
+        [Unit],
+        [Datasource],
+        [OrderWithinSecton],
+        [Objective/Subjective],
+        [Comments],
+        [Active],
+        [FLAG_DIVISINAL],
+        [FLAG_VENDOR],
+        [FLAG_ENGAGEMENTID],
+        [FLAG_CONTRACTID],
+        [FLAG_COSTCENTRE],
+        [FLAG_DEUBALvl4],
+        [FLAG_HRID],
+        [FLAG_REQUESTID],
+        [test1],
+        [test2]
+    FROM dbo.KPITable
+    WHERE (@Status IS NULL OR Active = @Status)
+      AND (@Search IS NULL 
+           OR [KPI ID] LIKE ''%'' + @Search + ''%''
+           OR [KPI Name] LIKE ''%'' + @Search + ''%''
+           OR [KPI or Standalone Metric] LIKE ''%'' + @Search + ''%''
+           OR [KPI Short Description] LIKE ''%'' + @Search + ''%'')
+    ORDER BY ' + QUOTENAME(PARSENAME(@SortColumn, 1)) + ' ' + @SortDirection +
+             CASE
+                 WHEN REPLACE(REPLACE(@SortColumn, '[', ''), ']', '') <> 'OrderWithinSecton'
+                 THEN ', [OrderWithinSecton] ASC'
+                 ELSE ''
+             END + ';';
+
+    -- Execute dynamic SQL
+    EXEC sp_executesql @sql,
+        N'@Status CHAR(1), @SortColumn NVARCHAR(50), @SortDirection NVARCHAR(4), @Search NVARCHAR(100)',
+        @Status, @SortColumn, @SortDirection, @Search;
+END
+GO
+
+
+Update Store Proc 
+USE [sohail]
+GO
+
+/****** Object:  StoredProcedure [dbo].[UpdateKPIByID]    Script Date: 16-08-2025 00:09:32 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+
+-- Alter the existing procedure to include test1 and test2
+ALTER PROCEDURE [dbo].[UpdateKPIByID]
+    @OriginalKPIID NVARCHAR(100), -- old value
+    @KPI_ID NVARCHAR(100),        -- new value
+    @KPI_or_Standalone_Metric NVARCHAR(255),
+    @KPI_Name NVARCHAR(255),
+    @KPI_Short_Description NVARCHAR(255),
+    @KPI_Impact NVARCHAR(255),
+    @Numerator_Description NVARCHAR(255),
+    @Denominator_Description NVARCHAR(255),
+    @Unit NVARCHAR(50),
+    @Datasource NVARCHAR(255),
+    @OrderWithinSecton INT,
+    @Active CHAR(1),
+    @FLAG_DIVISINAL CHAR(1),
+    @FLAG_VENDOR CHAR(1),
+    @FLAG_ENGAGEMENTID CHAR(1),
+    @FLAG_CONTRACTID CHAR(1),
+    @FLAG_COSTCENTRE CHAR(1),
+    @FLAG_DEUBALvl4 CHAR(1),
+    @FLAG_HRID CHAR(1),
+    @FLAG_REQUESTID CHAR(1),
+    -- Add parameters for the new columns
+    @test1 NVARCHAR(255) = NULL, -- Added parameter with default NULL
+    @test2 NVARCHAR(255) = NULL, -- Added parameter with default NULL
+	@Objective_Subjective NVARCHAR(50) = NULL,
+    @Comments NVARCHAR(MAX)
+AS
+BEGIN
+    -- Prevent extra result sets from interfering with SELECT statements
+    SET NOCOUNT ON;
+
+    UPDATE KPITable
+    SET 
+        [KPI ID] = @KPI_ID,
+        [KPI or Standalone Metric] = @KPI_or_Standalone_Metric,
+        [KPI Name] = @KPI_Name,
+        [KPI Short Description] = @KPI_Short_Description,
+        [KPI Impact] = @KPI_Impact,
+        [Numerator Description] = @Numerator_Description,
+        [Denominator Description] = @Denominator_Description,
+        [Unit] = @Unit,
+        [Datasource] = @Datasource,
+        [OrderWithinSecton] = @OrderWithinSecton,
+        [Active] = @Active,
+        [FLAG_DIVISINAL] = @FLAG_DIVISINAL,
+        [FLAG_VENDOR] = @FLAG_VENDOR,
+        [FLAG_ENGAGEMENTID] = @FLAG_ENGAGEMENTID,
+        [FLAG_CONTRACTID] = @FLAG_CONTRACTID,
+        [FLAG_COSTCENTRE] = @FLAG_COSTCENTRE,
+        [FLAG_DEUBALvl4] = @FLAG_DEUBALvl4,
+        [FLAG_HRID] = @FLAG_HRID,
+        [FLAG_REQUESTID] = @FLAG_REQUESTID,
+        -- Include the new columns in the SET clause
+        [test1] = @test1,
+        [test2] = @test2,
+		[Objective/Subjective] = @Objective_Subjective,
+        Comments = @Comments
+    WHERE [KPI ID] = @OriginalKPIID;
+
+END;
+GO
+
+
+
+
+
