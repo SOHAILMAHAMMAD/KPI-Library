@@ -387,6 +387,40 @@ table td, table th {
         padding: 15px;
     }
 }
+    .custom-dropdown {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-family: Arial, sans-serif;
+    color: #333;
+    background-color: #fff;
+    border: 1px solid #d0d0d0;
+    border-radius: 6px;
+    box-sizing: border-box;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.custom-dropdown:hover {
+    border-color: #2196F3;
+    box-shadow: 0 1px 5px rgba(33, 150, 243, 0.2);
+}
+
+.custom-dropdown:focus {
+    outline: none;
+    border-color: #2196F3;
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.25);
+    z-index: 10;
+}
+
+.custom-dropdown:disabled {
+    background-color: #f9f9f9;
+    color: #aaa;
+    cursor: not-allowed;
+}
+
+
 
 </style>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
@@ -676,13 +710,13 @@ table td, table th {
                 $('#<%=hfKPIID.ClientID%>').focus();
             }
         });
-    });
+    });   
 </script>
 
 
   
   <div id="kpiModal" class="modal">
-        <span class="close-btn" onclick="hidePopup()">×</span>
+        <span class="close-btn" onclick="hidePopup()">&#215;</span>
         <h3><asp:Label ID="lblFormTitle" runat="server" Text="Add KPI" /></h3>
 
         <table>
@@ -701,7 +735,7 @@ table td, table th {
              <tr>
         <td>Objective/Subjective:</td>
         <td>
-            <asp:DropDownList ID="ddlObjectiveSubjective" runat="server" CssClass="form-control">
+            <asp:DropDownList ID="ddlObjectiveSubjective" runat="server" CssClass="custom-dropdown">
                 <asp:ListItem Value="" Text="-- Select --" Selected="True"></asp:ListItem>
                 <asp:ListItem Value="Objective" Text="Objective"></asp:ListItem>
                 <asp:ListItem Value="Subjective" Text="Subjective"></asp:ListItem>
@@ -802,24 +836,25 @@ table td, table th {
      <div class="kpi-table-scroll">
         <!-- New search container -->
         <div class="search-container">
-            <asp:TextBox ID="txtSearch" runat="server" 
-                CssClass="search-box" 
-                placeholder="Search by KPI ID, Name, or Metric..." />
-            <asp:Button ID="btnSearch" runat="server" Text="Search" 
-                OnClientClick="filterGrid(); return false;" 
-                CssClass="search-button" />
-            <asp:Button ID="btnClear" runat="server" Text="Clear" 
-                OnClientClick="clearFilter(); return false;" 
-                CssClass="clear-button" />
-            <asp:Button ID="btnExport" runat="server" Text="Export to Excel" 
+    <asp:TextBox ID="txtSearch" runat="server" 
+        CssClass="search-box" 
+        placeholder="Search by KPI ID, Name, or Metric..." />
+   <asp:Button ID="btnSearch" runat="server" Text="Search" 
+    OnClick="btnSearch_Click" 
+    CssClass="search-button" 
+    CausesValidation="false" />
+    <asp:Button ID="btnClear" runat="server" Text="Clear" 
+        OnClientClick="btnClear_Click" 
+        CssClass="clear-button" />
+    <asp:Button ID="btnExport" runat="server" Text="Export to Excel" 
         CssClass="search-button" OnClick="btnExport_Click" 
         style="background-color: #4CAF50;" />
-            <span id="toggleLabel" runat="server" style="font-weight:bold; margin-left: 20px;">Active</span>
+    <span id="toggleLabel" runat="server" style="font-weight:bold; margin-left: 20px;">Active</span>
     <label class="toggle-switch" style="vertical-align:middle;">
         <asp:CheckBox ID="chkShowActive" runat="server" AutoPostBack="true" OnCheckedChanged="chkShowActive_CheckedChanged" />
         <span class="slider"></span>
     </label>
-        </div>
+</div>
 
          </div>
 
@@ -1045,7 +1080,7 @@ table td, table th {
                 <asp:LinkButton ID="btnSortUpObjSub" runat="server" CommandName="CustomSort"
                     CommandArgument="Objective/Subjective|DESC" CssClass="arrow-icon" ToolTip="Sort Descending">&#9650;</asp:LinkButton>
                 <asp:LinkButton ID="btnSortDownObjSub" runat="server" CommandName="CustomSort"
-                    CommandArgument="Objective_or_Subjective|ASC" CssClass="arrow-icon" ToolTip="Sort Ascending">&#9660;</asp:LinkButton>
+                    CommandArgument="Objective/Subjective|ASC" CssClass="arrow-icon" ToolTip="Sort Ascending">&#9660;</asp:LinkButton>
             </span>
             <asp:Label ID="lblCurrentSortObjSub" runat="server" CssClass="sort-indicator"></asp:Label>
         </div>
