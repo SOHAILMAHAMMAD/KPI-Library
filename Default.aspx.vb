@@ -386,6 +386,38 @@ Public Class _Default
         ScriptManager.RegisterStartupScript(Me, Me.GetType(), "ShowModal_" & Guid.NewGuid().ToString(), "showPopup(); hideKPIError();", True)
     End Sub
 
+    Protected Sub btnClear_Click(sender As Object, e As EventArgs) Handles btnClear.Click
+        txtSearch.Text = ""
+        ApplySearchFilter()
+        GridView1.DataBind()
+    End Sub
+
+    Protected Sub btnSearch_Click(sender As Object, e As EventArgs) Handles btnSearch.Click
+        ApplySearchFilter()
+        GridView1.DataBind()
+    End Sub
+
+    Private Sub ApplySearchFilter()
+        Dim searchText As String = CleanInput(txtSearch.Text)
+
+        ' Get existing Search parameter
+        Dim searchParam As Parameter = SqlDataSource1.SelectParameters("Search")
+
+        If String.IsNullOrEmpty(searchText) Then
+            ' Remove parameter if exists
+            If searchParam IsNot Nothing Then
+                SqlDataSource1.SelectParameters.Remove(searchParam)
+            End If
+        Else
+            ' Add or update parameter
+            If searchParam Is Nothing Then
+                SqlDataSource1.SelectParameters.Add(New Parameter("Search", TypeCode.String, searchText))
+            Else
+                searchParam.DefaultValue = searchText
+            End If
+        End If
+    End Sub
+
     Protected Sub btnExport_Click(sender As Object, e As EventArgs)
         Try
             ' Get fresh data using the same logic as GridView
@@ -496,9 +528,16 @@ Public Class _Default
                     cmd.Connection = conn
                     cmd.CommandText = "dbo.GetAllKPITable"
                     cmd.CommandType = CommandType.StoredProcedure
+
+                    ' Add all parameters
                     cmd.Parameters.AddWithValue("@Status", SqlDataSource1.SelectParameters("Status").DefaultValue)
                     cmd.Parameters.AddWithValue("@SortColumn", SqlDataSource1.SelectParameters("SortColumn").DefaultValue)
                     cmd.Parameters.AddWithValue("@SortDirection", SqlDataSource1.SelectParameters("SortDirection").DefaultValue)
+
+                    'Add Search parameter if exists
+                    Dim searchParam = SqlDataSource1.SelectParameters("Search")
+                    Dim searchValue As Object = If(searchParam IsNot Nothing, searchParam.DefaultValue, DBNull.Value)
+                    cmd.Parameters.AddWithValue("@Search", searchValue)
 
                     conn.Open()
                     Using da As New SqlDataAdapter(cmd)
@@ -609,3 +648,5 @@ Public Class _Default
 
 
 End Class
+
+
