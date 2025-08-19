@@ -251,6 +251,111 @@ END;
 GO
 
 
+function validateDuplicateMetricKPIName() {
+    var metricEl = document.getElementById(METRIC_INPUT_ID);
+    var kpiNameEl = document.getElementById(KPI_NAME_INPUT_ID);
+    var kpiIdEl = document.getElementById(KPI_ID_INPUT_ID);
+
+    var metricVal = metricEl ? metricEl.value.trim() : '';
+    var kpiNameVal = kpiNameEl ? kpiNameEl.value.trim() : '';
+    var kpiIdVal = kpiIdEl ? kpiIdEl.value.trim() : '';
+
+    // If empty inputs, clear error immediately
+    if (!metricVal || !kpiNameVal) {
+        showFieldError(DUPLICATE_NAME_LABEL_ID, KPI_NAME_INPUT_ID, '');
+        return;
+    }
+
+    var payload = JSON.stringify({
+        fieldType: "KPI_Name_Metric",
+        value1: kpiNameVal,
+        value2: metricVal,
+        originalKpiId: kpiIdVal // to exclude current KPI during edit if needed
+    });
+
+        fetch('<%= ResolveUrl("Default.aspx/ValidateKPIField") %>', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json; charset=utf-8' },
+            body: payload,
+            credentials: 'same-origin'
+        })
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+                var errorMessage = data && data.d ? data.d : '';
+                if (errorMessage) {
+                    showFieldError(DUPLICATE_NAME_LABEL_ID, KPI_NAME_INPUT_ID, errorMessage);
+                } else {
+                    showFieldError(DUPLICATE_NAME_LABEL_ID, KPI_NAME_INPUT_ID, '');
+                }
+            })
+            .catch(function () {
+                showFieldError(DUPLICATE_NAME_LABEL_ID, KPI_NAME_INPUT_ID, '');
+            });
+    }
+
+    // Attach event listeners on DOM ready - like order validation
+    document.addEventListener('DOMContentLoaded', function () {
+        var metricEl = document.getElementById(METRIC_INPUT_ID);
+        var kpiNameEl = document.getElementById(KPI_NAME_INPUT_ID);
+
+        if (metricEl) {
+            metricEl.addEventListener('blur', validateDuplicateMetricKPIName);
+            metricEl.addEventListener('change', validateDuplicateMetricKPIName);
+        }
+        if (kpiNameEl) {
+            kpiNameEl.addEventListener('blur', validateDuplicateMetricKPIName);
+            kpiNameEl.addEventListener('change', validateDuplicateMetricKPIName);
+            kpiNameEl.addEventListener('keyup', function (e) {
+                if (e.key === 'Enter') return;
+                clearTimeout(kpiNameEl.__t);
+                kpiNameEl.__t = setTimeout(validateDuplicateMetricKPIName, 300);
+            });
+        }
+    });
+
+<WebMethod()>
+<ScriptMethod(ResponseFormat:=ResponseFormat.Json)>
+Public Shared Function ValidateKPIField(fieldType As String, value1 As String, value2 As String) As String
+    ' value2 is optional, used for metric/name checks
+    Try
+        Using conn As New SqlConnection(ConfigurationManager.ConnectionStrings("MyDatabase").ConnectionString)
+            conn.Open()
+            Select Case fieldType
+                Case "KPI_ID"
+                    Using cmd As New SqlCommand("SELECT COUNT(*) FROM KPITable WHERE [KPI ID] = @KPI_ID", conn)
+                        cmd.Parameters.AddWithValue("@KPI_ID", value1.Trim())
+                        If Convert.ToInt32(cmd.ExecuteScalar()) > 0 Then
+                            Return "Duplicate KPI ID not allowed."
+                        End If
+                    End Using
+                Case "KPI_Name_Metric"
+                    Using cmd As New SqlCommand("SELECT COUNT(*) FROM KPITable WHERE [KPI Name] = @KPIName AND [KPI or Standalone Metric] = @Metric", conn)
+                        cmd.Parameters.AddWithValue("@KPIName", value1.Trim())
+                        cmd.Parameters.AddWithValue("@Metric", value2.Trim())
+                        If Convert.ToInt32(cmd.ExecuteScalar()) > 0 Then
+                            Return "Duplicate KPI Name for this Metric is not allowed."
+                        End If
+                    End Using
+                Case "Order_Metric"
+                    Dim orderNum As Integer
+                    If Not Integer.TryParse(value1, orderNum) OrElse orderNum < 1 OrElse orderNum > 999 Then
+                        Return "Order must be a number between 1 and 999."
+                    End If
+                    Using cmd As New SqlCommand("SELECT COUNT(*) FROM KPITable WHERE OrderWithinSecton = @Order AND [KPI or Standalone Metric] = @Metric", conn)
+                        cmd.Parameters.AddWithValue("@Order", orderNum)
+                        cmd.Parameters.AddWithValue("@Metric", value2.Trim())
+                        If Convert.ToInt32(cmd.ExecuteScalar()) > 0 Then
+                            Return "Duplicate Order for this Metric is not allowed."
+                        End If
+                    End Using
+            End Select
+        End Using
+        Return "" ' No error
+    Catch ex As Exception
+        Return "Error: " & ex.Message
+    End Try
+End Function
+
 
 
 
