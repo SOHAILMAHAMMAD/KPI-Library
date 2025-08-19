@@ -420,10 +420,22 @@ table td, table th {
     cursor: not-allowed;
 }
 
+.error-msg {
+        display: none;
+        color: #b00020;
+        margin-top: 4px;
+        font-size: 12px;
+        }
+        .field-invalid {
+        border-color: #ff0000;
+        box-shadow: 0 0 0 2px rgba(176, 0, 32, 0.15);
+  }
+
 
 
 </style>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+   
+ <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script>
     let lblKPIError = null;
     let inputField = null;
@@ -648,6 +660,8 @@ table td, table th {
         }
     }
 
+    
+
     function hideKPIError() {
         if (!lblKPIError) {
             lblKPIError = document.getElementById('<%=lblKPIError.ClientID%>');
@@ -711,6 +725,198 @@ table td, table th {
             }
         });
     });   
+    var ORDER_LABEL_ID = '<%= lblOrderError.ClientID %>';
+    var ORDER_INPUT_ID = '<%= txtOrder.ClientID %>';
+    var METRIC_INPUT_ID = '<%= txtMetric.ClientID %>';
+var KPIID_INPUT_ID  = '<%= txtKPIID.ClientID %>';
+
+function showFieldError(labelClientId, inputClientId, message) {
+    var lbl = document.getElementById(labelClientId);
+    var inp = document.getElementById(inputClientId);
+    if (lbl) {
+        lbl.innerText = message || '';
+        lbl.style.display = message ? 'block' : 'none';
+    }
+    if (inp) {
+        if (message) {
+            inp.classList.add('field-invalid');
+            if (document.activeElement !== inp) {
+                try { inp.focus(); } catch(e) {}
+            }
+            inp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            inp.classList.remove('field-invalid');
+        }
+    }
+}
+
+function validateOrderDynamic() {
+    var orderEl  = document.getElementById(ORDER_INPUT_ID);
+    var metricEl = document.getElementById(METRIC_INPUT_ID);
+    var kpiIdEl  = document.getElementById(KPIID_INPUT_ID);
+
+    var orderVal  = orderEl ? orderEl.value.trim() : '';
+    var metricVal = metricEl ? metricEl.value.trim() : '';
+    var kpiIdVal  = kpiIdEl ? kpiIdEl.value.trim() : '';
+
+    if (!/^\d+$/.test(orderVal)) {
+        showFieldError(ORDER_LABEL_ID, ORDER_INPUT_ID, 'Order number must be between 1 and 999, using only numerical digits.');
+        return;
+    }
+
+    var n = parseInt(orderVal, 10);
+    if (n < 1 || n > 999) {
+        showFieldError(ORDER_LABEL_ID, ORDER_INPUT_ID, 'Order must be between 1 and 999.');
+        return;
+    }
+
+    if (!metricVal) {
+        showFieldError(ORDER_LABEL_ID, ORDER_INPUT_ID, '');
+        return;
+    }
+
+    var payload = JSON.stringify({
+        metric: metricVal,
+        orderWithinSecton: n,
+        originalKpiId: kpiIdVal
+    });
+
+        fetch('<%= ResolveUrl("Default.aspx/ValidateOrder") %>', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json; charset=utf-8' },
+            body: payload,
+            credentials: 'same-origin'
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var result = (data && data.d) ? data.d : { isValid: true, message: '' };
+                if (!result.isValid) {
+                    showFieldError(ORDER_LABEL_ID, ORDER_INPUT_ID, result.message || 'Invalid order.');
+                } else {
+                    showFieldError(ORDER_LABEL_ID, ORDER_INPUT_ID, '');
+                }
+            })
+            .catch(function () {
+                showFieldError(ORDER_LABEL_ID, ORDER_INPUT_ID, '');
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var orderEl = document.getElementById(ORDER_INPUT_ID);
+        var metricEl = document.getElementById(METRIC_INPUT_ID);
+        var kpiIdEl = document.getElementById(KPIID_INPUT_ID);
+
+        if (orderEl) {
+            orderEl.addEventListener('blur', validateOrderDynamic);
+            orderEl.addEventListener('change', validateOrderDynamic);
+            orderEl.addEventListener('keyup', function (e) {
+                if (e.key === 'Enter') return;
+                clearTimeout(orderEl.__t);
+                orderEl.__t = setTimeout(validateOrderDynamic, 300);
+            });
+        }
+
+        if (metricEl) {
+            metricEl.addEventListener('blur', validateOrderDynamic);
+            metricEl.addEventListener('change', validateOrderDynamic);
+        }
+
+        if (kpiIdEl) {
+            kpiIdEl.addEventListener('blur', validateOrderDynamic);
+            kpiIdEl.addEventListener('change', validateOrderDynamic);
+        }
+    });
+
+
+    // IDs from ASPX, update if needed
+    var DUPLICATE_NAME_LABEL_ID = '<%= lblDuplicateMetricKPIError.ClientID %>';
+    var METRIC_INPUT_ID = '<%= txtMetric.ClientID %>';
+    var KPI_NAME_INPUT_ID = '<%= txtKPIName.ClientID %>';
+var KPI_ID_INPUT_ID = '<%= txtKPIID.ClientID %>';
+
+function showFieldError(labelClientId, inputClientId, message) {
+    var lbl = document.getElementById(labelClientId);
+    var inp = document.getElementById(inputClientId);
+    if (lbl) {
+        lbl.innerText = message || '';
+        lbl.style.display = message ? 'block' : 'none';
+    }
+    if (inp) {
+        if (message) {
+            inp.classList.add('field-invalid');
+            if (document.activeElement !== inp) {
+                try { inp.focus(); } catch(e) {}
+            }
+            inp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            inp.classList.remove('field-invalid');
+        }
+    }
+}
+
+function validateDuplicateMetricKPIName() {
+    var metricEl = document.getElementById(METRIC_INPUT_ID);
+    var kpiNameEl = document.getElementById(KPI_NAME_INPUT_ID);
+    var kpiIdEl = document.getElementById(KPI_ID_INPUT_ID);
+
+    var metricVal = metricEl ? metricEl.value.trim() : '';
+    var kpiNameVal = kpiNameEl ? kpiNameEl.value.trim() : '';
+    var kpiIdVal = kpiIdEl ? kpiIdEl.value.trim() : '';
+
+    // If empty inputs, clear error immediately
+    if (!metricVal || !kpiNameVal) {
+        showFieldError(DUPLICATE_NAME_LABEL_ID, KPI_NAME_INPUT_ID, '');
+        return;
+    }
+
+    var payload = JSON.stringify({
+        fieldType: "KPI_Name_Metric",
+        value1: kpiNameVal,
+        value2: metricVal,
+        originalKpiId: kpiIdVal // to exclude current KPI during edit if needed
+    });
+
+        fetch('<%= ResolveUrl("Default.aspx/ValidateKPIField") %>', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json; charset=utf-8' },
+            body: payload,
+            credentials: 'same-origin'
+        })
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+                var errorMessage = data && data.d ? data.d : '';
+                if (errorMessage) {
+                    showFieldError(DUPLICATE_NAME_LABEL_ID, KPI_NAME_INPUT_ID, errorMessage);
+                } else {
+                    showFieldError(DUPLICATE_NAME_LABEL_ID, KPI_NAME_INPUT_ID, '');
+                }
+            })
+            .catch(function () {
+                showFieldError(DUPLICATE_NAME_LABEL_ID, KPI_NAME_INPUT_ID, '');
+            });
+    }
+
+    // Attach event listeners on DOM ready - like order validation
+    document.addEventListener('DOMContentLoaded', function () {
+        var metricEl = document.getElementById(METRIC_INPUT_ID);
+        var kpiNameEl = document.getElementById(KPI_NAME_INPUT_ID);
+
+        if (metricEl) {
+            metricEl.addEventListener('blur', validateDuplicateMetricKPIName);
+            metricEl.addEventListener('change', validateDuplicateMetricKPIName);
+        }
+        if (kpiNameEl) {
+            kpiNameEl.addEventListener('blur', validateDuplicateMetricKPIName);
+            kpiNameEl.addEventListener('change', validateDuplicateMetricKPIName);
+            kpiNameEl.addEventListener('keyup', function (e) {
+                if (e.key === 'Enter') return;
+                clearTimeout(kpiNameEl.__t);
+                kpiNameEl.__t = setTimeout(validateDuplicateMetricKPIName, 300);
+            });
+        }
+    });
+
+
 </script>
 
 
@@ -736,7 +942,7 @@ table td, table th {
         <td>Objective/Subjective:</td>
         <td>
             <asp:DropDownList ID="ddlObjectiveSubjective" runat="server" CssClass="custom-dropdown">
-                <asp:ListItem Value="" Text="-- Select --" Selected="True"></asp:ListItem>
+                <asp:ListItem Value="NUll" Text="-- Select --"  Selected="True"></asp:ListItem>
                 <asp:ListItem Value="Objective" Text="Objective"></asp:ListItem>
                 <asp:ListItem Value="Subjective" Text="Subjective"></asp:ListItem>
             </asp:DropDownList>
