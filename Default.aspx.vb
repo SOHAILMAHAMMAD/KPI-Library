@@ -81,7 +81,8 @@ Public Class _Default
 
         ' Reset all error labels
         lblKPIError.Visible = False
-        lblOrderError.Visible = False
+        lblOrderError.Text = ""
+        lblOrderError.Style("display") = "none"
         lblDuplicateMetricKPIError.Visible = False
 
         ' Basic field validation
@@ -115,7 +116,7 @@ Public Class _Default
                     Dim count = Convert.ToInt32(cmd.ExecuteScalar())
                     If count > 0 Then
                         lblOrderError.Text = "No duplicate order allowed for same metric."
-                        lblOrderError.Visible = True
+                        lblDuplicateMetricKPIError.Visible = True
                         valid = False
                     End If
                 End Using
@@ -289,7 +290,6 @@ Public Class _Default
     Private Sub LoadEditData(rowIndex As Integer)
         Dim kpiId As String = GridView1.DataKeys(rowIndex).Value.ToString()
 
-
         hfIsEdit.Value = "true"
         hfKPIID.Value = kpiId
         lblFormTitle.Text = "Edit KPI"
@@ -314,6 +314,7 @@ Public Class _Default
                         txtTest1.Text = reader("Test1").ToString()
                         txtTest2.Text = reader("Test2").ToString()
                         txtComments.Text = reader("Comments").ToString()
+
                         chkActive.Checked = reader("Active").ToString().ToUpper() = "Y"
                         chkFlagDivisinal.Checked = reader("FLAG_DIVISINAL").ToString().ToUpper() = "Y"
                         chkFlagVendor.Checked = reader("FLAG_VENDOR").ToString().ToUpper() = "Y"
@@ -323,17 +324,26 @@ Public Class _Default
                         chkFlagDeuballvl4.Checked = reader("FLAG_DEUBALvl4").ToString().ToUpper() = "Y"
                         chkFlagHRID.Checked = reader("FLAG_HRID").ToString().ToUpper() = "Y"
                         chkFlagRequest.Checked = reader("FLAG_REQUESTID").ToString().ToUpper() = "Y"
+
+                        ' ✅ Set dropdown value from DB
+                        Dim objSub As String = reader("Objective/Subjective").ToString()
+                        If ddlObjectiveSubjective.Items.FindByValue(objSub) IsNot Nothing Then
+                            ddlObjectiveSubjective.SelectedValue = objSub
+                        Else
+                            ddlObjectiveSubjective.SelectedValue = "" ' Fallback
+                        End If
                     End If
                 End Using
             End Using
         End Using
 
-        ' Hide error labels when loading edit data
+        ' Hide error labels
         lblKPIError.Visible = False
-        lblOrderError.Visible = False
+        lblOrderError.Text = ""
+        lblOrderError.Style("display") = "none"
         lblDuplicateMetricKPIError.Visible = False
 
-        ScriptManager.RegisterStartupScript(Me, Me.GetType(), "ShowModal_" & Guid.NewGuid().ToString(), "showPopup(); hideKPIError();", True)
+        ScriptManager.RegisterStartupScript(Me, Me.GetType(), "ShowModal", "showPopup(); hideKPIError();", True)
     End Sub
 
     Private Sub ClearForm()
@@ -352,18 +362,20 @@ Public Class _Default
         txtOrder.Text = ""
         txtTest1.Text = ""
         txtTest2.Text = ""
+        txtComments.Text = ""
+        txtKPIID.Enabled = True
+
+        ' Reset dropdown
         If ddlObjectiveSubjective.Items.Count > 0 Then
             ddlObjectiveSubjective.ClearSelection()
             If ddlObjectiveSubjective.Items.FindByValue("") IsNot Nothing Then
                 ddlObjectiveSubjective.SelectedValue = ""
             Else
-                ddlObjectiveSubjective.SelectedIndex = 0 ' Fallback
+                ddlObjectiveSubjective.SelectedIndex = 0
             End If
         End If
 
-        txtComments.Text = ""
-        txtKPIID.Enabled = True
-
+        ' Reset checkboxes
         chkActive.Checked = False
         chkFlagDivisinal.Checked = False
         chkFlagVendor.Checked = False
@@ -381,9 +393,9 @@ Public Class _Default
     End Sub
 
     Protected Sub btnAddKPI_Click(sender As Object, e As EventArgs)
-        ClearForm()
+        ClearForm() ' This resets dropdown to "Please Select"
         lblFormTitle.Text = "Add KPI"
-        ScriptManager.RegisterStartupScript(Me, Me.GetType(), "ShowModal_" & Guid.NewGuid().ToString(), "showPopup(); hideKPIError();", True)
+        ScriptManager.RegisterStartupScript(Me, Me.GetType(), "ShowModal", "showPopup(); hideKPIError();", True)
     End Sub
 
     Protected Sub btnClear_Click(sender As Object, e As EventArgs) Handles btnClear.Click
@@ -551,34 +563,49 @@ Public Class _Default
         Return dt
     End Function
 
-    <WebMethod(EnableSession:=False)>
+    <WebMethod()>
     <ScriptMethod(ResponseFormat:=ResponseFormat.Json)>
-    Public Shared Function CheckKPIExists(kpiID As String) As Boolean
+    Public Shared Function ValidateKPIField(fieldType As String, value1 As String, value2 As String) As String
+        ' value2 is optional, used for metric/name checks
         Try
-            ' Clean the input
-            If String.IsNullOrWhiteSpace(kpiID) Then
-                System.Diagnostics.Debug.WriteLine("CheckKPIExists: Empty or null KPI ID")
-                Return False
-            End If
-
-            kpiID = kpiID.Trim()
-            System.Diagnostics.Debug.WriteLine("CheckKPIExists: Checking KPI ID: " & kpiID)
-
             Using conn As New SqlConnection(ConfigurationManager.ConnectionStrings("MyDatabase").ConnectionString)
-                Using cmd As New SqlCommand("SELECT COUNT(*) FROM KPITable WHERE [KPI ID] = @KPI_ID", conn)
-                    cmd.Parameters.AddWithValue("@KPI_ID", kpiID)
-                    conn.Open()
-                    Dim count As Integer = Convert.ToInt32(cmd.ExecuteScalar())
-                    System.Diagnostics.Debug.WriteLine("CheckKPIExists: Result for " & kpiID & ": " & (count > 0))
-                    Return count > 0
-                End Using
+                conn.Open()
+                Select Case fieldType
+                    Case "KPI_ID"
+                        Using cmd As New SqlCommand("SELECT COUNT(*) FROM KPITable WHERE [KPI ID] = @KPI_ID", conn)
+                            cmd.Parameters.AddWithValue("@KPI_ID", value1.Trim())
+                            If Convert.ToInt32(cmd.ExecuteScalar()) > 0 Then
+                                Return "Duplicate KPI ID not allowed."
+                            End If
+                        End Using
+                    Case "KPI_Name_Metric"
+                        Using cmd As New SqlCommand("SELECT COUNT(*) FROM KPITable WHERE [KPI Name] = @KPIName AND [KPI or Standalone Metric] = @Metric", conn)
+                            cmd.Parameters.AddWithValue("@KPIName", value1.Trim())
+                            cmd.Parameters.AddWithValue("@Metric", value2.Trim())
+                            If Convert.ToInt32(cmd.ExecuteScalar()) > 0 Then
+                                Return "Duplicate KPI Name for this Metric is not allowed."
+                            End If
+                        End Using
+                    Case "Order_Metric"
+                        Dim orderNum As Integer
+                        If Not Integer.TryParse(value1, orderNum) OrElse orderNum < 1 OrElse orderNum > 999 Then
+                            Return "Order must be a number between 1 and 999."
+                        End If
+                        Using cmd As New SqlCommand("SELECT COUNT(*) FROM KPITable WHERE OrderWithinSecton = @Order AND [KPI or Standalone Metric] = @Metric", conn)
+                            cmd.Parameters.AddWithValue("@Order", orderNum)
+                            cmd.Parameters.AddWithValue("@Metric", value2.Trim())
+                            If Convert.ToInt32(cmd.ExecuteScalar()) > 0 Then
+                                Return "Duplicate Order for this Metric is not allowed."
+                            End If
+                        End Using
+                End Select
             End Using
+            Return "" ' No error
         Catch ex As Exception
-            ' Log detailed error information
-            System.Diagnostics.Debug.WriteLine("CheckKPIExists Error: " & ex.Message & " StackTrace: " & ex.StackTrace)
-            Return False ' Allow server-side validation to handle
+            Return "Error: " & ex.Message
         End Try
     End Function
+
 
     Protected Sub GridView1_RowCreated(sender As Object, e As GridViewRowEventArgs) Handles GridView1.RowCreated
         If e.Row.RowType = DataControlRowType.Header Then
