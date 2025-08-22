@@ -357,5 +357,72 @@ Public Shared Function ValidateKPIField(fieldType As String, value1 As String, v
 End Function
 
 
+<div style=" text-align:left;margin-bottom: 10px;">
+<!-- Export Button -->
+<button type="button" id="btnExportCSV" onclick="exportTableToCSV('KPIs_<%= DateTime.Now.ToString("yyyyMMdd_HHmmss") %>.csv')" class="btn-add" style="margin-right: 10px;">Export to CSV</button>
+        </div>
 
+// Client-Side CSV Export Function
+ function exportTableToCSV(filename) {
+     var csv = [];
+     var table = document.getElementById('<%= GridView1.ClientID %>'); // Get the GridView table
+
+     if (!table) {
+         alert("Could not find the data table to export.");
+         console.error("Table element not found for export.");
+         return;
+     }
+
+     // Get all rows in the table (including header)
+     var rows = table.querySelectorAll("tr");
+     for (var i = 0; i < rows.length; i++) {
+         var row = [], cols = rows[i].querySelectorAll("td, th"); // Get cells (data & header)
+         for (var j = 1; j < cols.length; j++) {
+             // Get cell text and clean it for CSV
+             let cellData = cols[j].innerText !== undefined ? cols[j].innerText : cols[j].textContent;
+
+             // Remove sorting arrows ▲ ▼
+             cellData = cellData.replace(/[▲▼]/g, '').trim();
+
+             // Escape double quotes by doubling them
+             cellData = cellData.replace(/"/g, '""');
+
+             // If data contains comma, newline, or quote, enclose it in double quotes
+             if (cellData.indexOf(',') >= 0 || cellData.indexOf('\n') >= 0 || cellData.indexOf('"') >= 0) {
+                 cellData = '"' + cellData + '"';
+             }
+
+             row.push(cellData);
+         }
+         csv.push(row.join(",")); // Join cells with comma
+     }
+
+     // Create CSV string
+     var csvString = csv.join("\n");
+
+     // Add UTF-8 BOM for better Excel compatibility
+     var BOM = "\uFEFF";
+
+     // Create a Blob and trigger download
+     var blob = new Blob([BOM + csvString], { type: 'text/csv;charset=utf-8;' });
+     if (navigator.msSaveBlob) { // For IE
+         navigator.msSaveBlob(blob, filename);
+     } else {
+         var link = document.createElement("a");
+         if (link.download !== undefined) { // Feature detection
+             // Create a link and trigger download
+             var url = URL.createObjectURL(blob);
+             link.setAttribute("href", url);
+             link.setAttribute("download", filename);
+             link.style.visibility = 'hidden';
+             document.body.appendChild(link);
+             link.click();
+             document.body.removeChild(link);
+         } else {
+             // Fallback: Open in new window (less ideal)
+             alert("Your browser might not support direct downloads. The CSV data will open in a new tab. Please copy and save it.");
+             window.open(URL.createObjectURL(blob));
+         }
+     }
+ }
 
