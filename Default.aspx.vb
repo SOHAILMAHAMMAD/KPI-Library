@@ -257,35 +257,97 @@ Public Class _Default
                 SqlDataSource1.SelectParameters("SortDirection").DefaultValue = SortDirection
                 GridView1.DataBind()
             End If
-        ElseIf e.CommandName = "DeleteKPI" Then
-            ' Get the row index from CommandArgument
+        ElseIf e.CommandName = "CloneKPI" Then
             Dim index As Integer = Convert.ToInt32(e.CommandArgument)
-            ' Get the KPI ID using DataKeys
-            Dim kpiId As String = GridView1.DataKeys(index).Value.ToString()
+            CloneKPI(index)
 
-            If Not String.IsNullOrEmpty(kpiId) Then
-                Try
-                    ' Use SqlConnection and SqlCommand to call the stored procedure
-                    Using conn As New SqlConnection(ConfigurationManager.ConnectionStrings("MyDatabase").ConnectionString)
-                        Using cmd As New SqlCommand("DeleteKPIByID", conn)
-                            cmd.CommandType = CommandType.StoredProcedure
-                            cmd.Parameters.AddWithValue("@KPI_ID", kpiId.Trim())
-                            conn.Open()
-                            cmd.ExecuteNonQuery()
-                        End Using
+
+        ElseIf e.CommandName = "DeleteKPI" Then
+        ' Get the row index from CommandArgument
+        Dim index As Integer = Convert.ToInt32(e.CommandArgument)
+        ' Get the KPI ID using DataKeys
+        Dim kpiId As String = GridView1.DataKeys(index).Value.ToString()
+
+        If Not String.IsNullOrEmpty(kpiId) Then
+            Try
+                ' Use SqlConnection and SqlCommand to call the stored procedure
+                Using conn As New SqlConnection(ConfigurationManager.ConnectionStrings("MyDatabase").ConnectionString)
+                    Using cmd As New SqlCommand("DeleteKPIByID", conn)
+                        cmd.CommandType = CommandType.StoredProcedure
+                        cmd.Parameters.AddWithValue("@KPI_ID", kpiId.Trim())
+                        conn.Open()
+                        cmd.ExecuteNonQuery()
                     End Using
+                End Using
 
-                    ' Show success message and refresh GridView
-                    ScriptManager.RegisterStartupScript(Me, Me.GetType(), "DeleteSuccess", "alert('KPI deleted successfully!');", True)
-                    GridView1.DataBind()
-                Catch ex As Exception
-                    ' Log error and show message to user
-                    System.Diagnostics.Debug.WriteLine("Delete Error: " & ex.Message & vbCrLf & ex.StackTrace)
-                    ScriptManager.RegisterStartupScript(Me, Me.GetType(), "DeleteError", "alert('Error deleting KPI: " & ex.Message.Replace("'", "\'") & "');", True)
-                End Try
-            End If
+                ' Show success message and refresh GridView
+                ScriptManager.RegisterStartupScript(Me, Me.GetType(), "DeleteSuccess", "alert('KPI deleted successfully!');", True)
+                GridView1.DataBind()
+            Catch ex As Exception
+                ' Log error and show message to user
+                System.Diagnostics.Debug.WriteLine("Delete Error: " & ex.Message & vbCrLf & ex.StackTrace)
+                ScriptManager.RegisterStartupScript(Me, Me.GetType(), "DeleteError", "alert('Error deleting KPI: " & ex.Message.Replace("'", "\'") & "');", True)
+            End Try
+        End If
         End If
     End Sub
+    Private Sub CloneKPI(rowIndex As Integer)
+        Dim kpiId As String = GridView1.DataKeys(rowIndex).Value.ToString()
+        hfIsEdit.Value = "false" ' Mark that this is NOT an edit; it will be a new insert
+        hfKPIID.Value = "" ' Clear any previous values
+        lblFormTitle.Text = "Clone KPI"
+
+        Using conn As New SqlConnection(ConfigurationManager.ConnectionStrings("MyDatabase").ConnectionString)
+            conn.Open()
+            Using cmd As New SqlCommand("SELECT * FROM KPITable WHERE [KPI ID] = @KPI_ID", conn)
+                cmd.Parameters.AddWithValue("@KPI_ID", kpiId)
+                Using reader As SqlDataReader = cmd.ExecuteReader()
+                    If reader.Read() Then
+                        txtKPIID.Text = "" ' Clear, require new unique ID for the cloned KPI
+                        txtKPIID.Enabled = True
+                        txtMetric.Text = reader("KPI or Standalone Metric").ToString()
+                        txtKPIName.Text = ""
+                        txtShortDesc.Text = reader("KPI Short Description").ToString()
+                        txtImpact.Text = reader("KPI Impact").ToString()
+                        txtNumerator.Text = reader("Numerator Description").ToString()
+                        txtDenom.Text = reader("Denominator Description").ToString()
+                        txtUnit.Text = reader("Unit").ToString()
+                        txtDatasource.Text = reader("Datasource").ToString()
+                        txtOrder.Text = ""
+                        txtTest1.Text = reader("Test1").ToString()
+                        txtTest2.Text = reader("Test2").ToString()
+                        txtComments.Text = reader("Comments").ToString()
+                        chkActive.Checked = reader("Active").ToString().ToUpper() = "Y"
+                        chkFlagDivisinal.Checked = reader("FLAG_DIVISINAL").ToString().ToUpper() = "Y"
+                        chkFlagVendor.Checked = reader("FLAG_VENDOR").ToString().ToUpper() = "Y"
+                        chkFlagEngagement.Checked = reader("FLAG_ENGAGEMENTID").ToString().ToUpper() = "Y"
+                        chkFlagContract.Checked = reader("FLAG_CONTRACTID").ToString().ToUpper() = "Y"
+                        chkFlagCostcentre.Checked = reader("FLAG_COSTCENTRE").ToString().ToUpper() = "Y"
+                        chkFlagDeuballvl4.Checked = reader("FLAG_DEUBALvl4").ToString().ToUpper() = "Y"
+                        chkFlagHRID.Checked = reader("FLAG_HRID").ToString().ToUpper() = "Y"
+                        chkFlagRequest.Checked = reader("FLAG_REQUESTID").ToString().ToUpper() = "Y"
+                        Dim objSub As String = reader("Objective/Subjective").ToString()
+                        If ddlObjectiveSubjective.Items.FindByValue(objSub) IsNot Nothing Then
+                            ddlObjectiveSubjective.SelectedValue = objSub
+                        Else
+                            ddlObjectiveSubjective.SelectedValue = "" ' Fallback
+                        End If
+                    End If
+                End Using
+            End Using
+        End Using
+
+        lblKPIError.Visible = False
+        lblOrderError.Text = ""
+        lblOrderError.Style("display") = "none"
+        lblDuplicateMetricKPIError.Visible = False
+
+        ' Show modal for user to enter new KPI ID, make edit if needed, and submit
+        ScriptManager.RegisterStartupScript(Me, Me.GetType(), "ShowModal", "showPopup(); checkRequiredCloneFields();", True)
+
+
+    End Sub
+
 
     Private Sub LoadEditData(rowIndex As Integer)
         Dim kpiId As String = GridView1.DataKeys(rowIndex).Value.ToString()
@@ -675,5 +737,3 @@ Public Class _Default
 
 
 End Class
-
-
