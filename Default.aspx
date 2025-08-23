@@ -660,7 +660,7 @@ table td, table th {
         }
     }
 
-    
+
 
     function hideKPIError() {
         if (!lblKPIError) {
@@ -917,6 +917,7 @@ function validateDuplicateMetricKPIName() {
     });
 
 
+
 </script>
 
 
@@ -1081,6 +1082,13 @@ function validateDuplicateMetricKPIName() {
             CommandArgument='<%# Container.DataItemIndex %>'
             CssClass="btn-edit" />
         &nbsp;
+
+        <asp:Button ID="btnClone" runat="server" Text="Clone"
+        CommandName="CloneKPI"
+        CommandArgument='<%# Container.DataItemIndex %>'
+        CssClass="btn-add" />
+        &nbsp;
+
         <asp:Button ID="btnDelete" runat="server" Text="Delete"
             CommandName="DeleteKPI"
             CommandArgument='<%# Container.DataItemIndex %>'
