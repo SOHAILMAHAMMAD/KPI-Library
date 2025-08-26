@@ -1,4 +1,4 @@
-<%@ Page Title="KPI Management" Language="VB" MasterPageFile="~/Site.Master" AutoEventWireup="false" CodeBehind="Default.aspx.vb" Inherits="KPILibrary._Default" %>
+<%@ Page Title="KPI Management" Language="VB" MasterPageFile="~/Site.Master" AutoEventWireup="false" CodeBehind="Default.aspx.vb" Inherits="KPILibrary._Default"  EnableEventValidation="false" %>
 <%@ Import Namespace="System.Web.Services" %>
 
 <asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
@@ -1054,7 +1054,7 @@ function validateDuplicateMetricKPIName() {
         OnClientClick="btnClear_Click" 
         CssClass="clear-button" />
     <asp:Button ID="btnExport" runat="server" Text="Export to Excel" 
-        CssClass="search-button" OnClick="btnExport_Click" 
+        CssClass="search-button"  
         style="background-color: #4CAF50;" />
     <span id="toggleLabel" runat="server" style="font-weight:bold; margin-left: 20px;">Active</span>
     <label class="toggle-switch" style="vertical-align:middle;">
